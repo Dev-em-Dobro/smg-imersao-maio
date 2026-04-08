@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Mario Galaxy: O Filme</title>
+  <meta name="description" content="Super Mario Galaxy: O Filme - Uma aventura epica pelo cosmos. Ja nos cinemas." />
+
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    :root {
+      /* Cosmic base — deep indigo space, not generic black */
+      --bg-deep: #06051a;
+      --bg-mid: #0c0b2e;
+      --bg-surface: #141340;
+      /* Starlight text — warm off-white like distant stars */
+      --text-primary: #f5f0e8;
+      --text-muted: rgba(245, 240, 232, 0.72);
+      /* Power Star yellow — THE accent, Luma/Star gold */
+      --accent-star: #ffd23f;
+      --accent-star-dim: rgba(255, 210, 63, 0.12);
+      /* Cosmic secondaries — used only in bg gradients & shadows */
+      --cosmic-cyan: #5ce0d8;
+      --cosmic-purple: #6a3cbc;
+      --cosmic-rose: #c8508c;
+      /* Motion */
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-deep);
+      background-image: linear-gradient(to bottom, #08072a 0%, var(--bg-deep) 50%, #030312 100%);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Grain overlay for texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
+
+    /* ---- FLOATING NAV ---- */
+    .floating-nav {
+      position: fixed;
+      top: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0.6rem 1.8rem;
+      border-radius: 9999px;
+      background: rgba(12, 11, 46, 0.7);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border: 1px solid rgba(92, 224, 216, 0.08);
+      box-shadow:
+        0 8px 32px rgba(6, 5, 26, 0.5),
+        inset 0 1px 0 rgba(92, 224, 216, 0.06);
+      opacity: 0;
+      transition: transform 0.7s var(--ease-out-expo), opacity 0.7s var(--ease-out-expo);
+    }
+
+    .floating-nav.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .floating-nav a {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.3s var(--ease-out-expo);
+      white-space: nowrap;
+    }
+
+    .floating-nav a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-logo {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--accent-star);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 14px;
+      background: rgba(92, 224, 216, 0.12);
+    }
+
+    /* ---- STARFIELD ---- */
+    #starfield {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ---- HERO ---- */
+    #hero {
+      position: relative;
+      height: 220vh;
+    }
+
+    .hero-sticky {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-planet-glow {
+      position: absolute;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150vw;
+      height: 90vw;
+      background: radial-gradient(ellipse at bottom,
+        rgba(92, 224, 216, 0.15) 0%,
+        rgba(106, 60, 188, 0.25) 30%,
+        rgba(6, 5, 26, 0) 65%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #planet-wrap {
+      position: absolute;
+      width: 1024px;
+      height: 1024px;
+      left: calc(50% - 512px);
+      bottom: -52%;
+      transform-origin: center bottom;
+      z-index: 2;
+      will-change: transform, opacity;
+    }
+
+    #planet-img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    #planet-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(6, 5, 26, 0.12);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-character {
+      position: fixed;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0;
+      will-change: transform, opacity;
+      background: transparent;
+      border: none;
+      outline: none;
+    }
+
+    #mario-img {
+      width: 280px;
+      top: 30%;
+      left: 6%;
+      animation: hero-float-mario 4s ease-in-out infinite;
+    }
+
+    #yoshi-img {
+      width: 170px;
+      top: clamp(14%, 17vh, 20%);
+      right: clamp(12%, 5vw, 6%);
+      transform: scaleX(-1);
+      animation: hero-float-yoshi 4.5s ease-in-out infinite;
+    }
+
+    @keyframes hero-float-mario {
+      0%, 100% { margin-top: 0; }
+      50%      { margin-top: -12px; }
+    }
+
+    @keyframes hero-float-yoshi {
+      0%, 100% { margin-top: 0; }
+      50%      { margin-top: -16px; }
+    }
+
+    /* ---- HERO TEXT ---- */
+    .hero-text {
+      position: absolute;
+      top: clamp(40%, 46vh, 22%);
+      left: 0; right: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 0 1rem;
+      pointer-events: none;
+      gap: 0;
+      will-change: transform, opacity;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent-star);
+      background: var(--accent-star-dim);
+      border: 1px solid rgba(255, 210, 63, 0.15);
+      margin-bottom: 1.2rem;
+      opacity: 0;
+    }
+
+    .hero-title {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+      filter: drop-shadow(0 4px 20px rgba(0,0,0,0.6));
+      opacity: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-title span {
+      display: block;
+      background: linear-gradient(to bottom, #fff8e0, #ffcc00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      opacity: 0;
+    }
+
+    .hero-cta {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      padding: 0.75rem 0.75rem 0.75rem 2rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      pointer-events: all;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      opacity: 0;
+      /* Metallic nebula background */
+      background:
+        linear-gradient(135deg,
+          rgba(106, 60, 188, 0.9) 0%,
+          rgba(80, 30, 160, 0.95) 30%,
+          rgba(140, 60, 200, 0.9) 50%,
+          rgba(60, 20, 140, 0.95) 70%,
+          rgba(106, 60, 188, 0.9) 100%);
+      background-size: 200% 200%;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      box-shadow:
+        0 4px 24px rgba(106, 60, 188, 0.4),
+        0 0 40px rgba(106, 60, 188, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+      transition: transform 0.5s var(--ease-spring), box-shadow 0.5s var(--ease-out-expo);
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    /* Metallic light sweep — infinite reflection */
+    .hero-cta::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -75%;
+      width: 70%;
+      height: 200%;
+      background: linear-gradient(
+        105deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0) 30%,
+        rgba(255, 255, 255, 0.15) 40%,
+        rgba(255, 255, 255, 0.55) 50%,
+        rgba(255, 255, 255, 0.15) 60%,
+        rgba(255, 255, 255, 0) 70%,
+        transparent 100%
+      );
+      transform: skewX(-20deg);
+      animation: cta-shine 3s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    @keyframes cta-shine {
+      0%   { left: -80%; opacity: 0; }
+      5%   { opacity: 1; }
+      60%  { left: 160%; opacity: 1; }
+      100% { left: 160%; opacity: 0; }
+    }
+
+    /* Nebula inner glow — subtle animated gradient shift */
+    .hero-cta::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 9999px;
+      background: radial-gradient(
+        ellipse at 30% 50%,
+        rgba(200, 160, 255, 0.25) 0%,
+        transparent 60%
+      );
+      opacity: 0.6;
+      animation: cta-nebula 4s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes cta-nebula {
+      0%   { opacity: 0.4; transform: translateX(-10%); }
+      100% { opacity: 0.8; transform: translateX(10%); }
+    }
+
+    .hero-cta .cta-label,
+    .hero-cta .cta-icon {
+      position: relative;
+      z-index: 3;
+    }
+
+    .hero-cta:hover {
+      transform: scale(1.06);
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow:
+        0 8px 40px rgba(106, 60, 188, 0.5),
+        0 0 60px rgba(106, 60, 188, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-cta:active {
+      transform: scale(0.97);
+    }
+
+    .cta-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-left: 0.85rem;
+      transition: transform 0.4s var(--ease-spring), background 0.3s;
+      backdrop-filter: blur(4px);
+    }
+
+    .hero-cta:hover .cta-icon {
+      transform: translateX(3px) scale(1.1);
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .cta-icon svg {
+      width: 16px; height: 16px;
+      color: #fff;
+      flex-shrink: 0;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+    }
+
+    /* ---- LUMA STARS ---- */
+    .luma-star {
+      position: absolute;
+      z-index: 5;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    .luma-star img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+    #luma-1 { width: 90px;  bottom: -12%; left: 8%;  opacity: 0; }
+    #luma-2 { width: 65px;  bottom: -8%;  right: 10%; opacity: 0; }
+    #luma-3 { width: 50px;  bottom: -15%; left: 52%; opacity: 0; }
+
+    @media (max-width: 768px) {
+      #luma-1 { width: 60px; left: 5%; }
+      #luma-2 { width: 45px; right: 5%; }
+      #luma-3 { width: 35px; }
+    }
+
+    /* Scroll hint */
+    .scroll-hint {
+      position: absolute;
+      bottom: 1.6rem; left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+      pointer-events: none; opacity: 0;
+    }
+    .scroll-hint span {
+      font-size: 0.65rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--text-muted);
+      font-weight: 600;
+    }
+    .scroll-arrow {
+      width: 14px; height: 14px;
+      border-right: 1.5px solid rgba(92, 224, 216, 0.4);
+      border-bottom: 1.5px solid rgba(92, 224, 216, 0.4);
+      transform: rotate(45deg);
+      animation: bounce 2.5s var(--ease-out-expo) infinite;
+    }
+    @keyframes bounce {
+      0%,100% { transform: rotate(45deg) translateY(0);   opacity: 0.3; }
+      50%      { transform: rotate(45deg) translateY(5px); opacity: 0.8; }
+    }
+
+    /* ---- MARQUEE ---- */
+    .marquee-section {
+      position: relative;
+      z-index: 6;
+      overflow: hidden;
+      padding: 2.5rem 0;
+      border-top: 1px solid rgba(200, 160, 255, 0.15);
+      border-bottom: 1px solid rgba(200, 160, 255, 0.15);
+      background:
+        linear-gradient(135deg,
+          rgba(106, 60, 188, 0.9) 0%,
+          rgba(80, 30, 160, 0.95) 30%,
+          rgba(140, 60, 200, 0.85) 50%,
+          rgba(60, 20, 140, 0.95) 70%,
+          rgba(106, 60, 188, 0.9) 100%);
+      box-shadow:
+        0 4px 30px rgba(106, 60, 188, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    /* Light sweep — same as CTA button */
+    .marquee-section::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -75%;
+      width: 40%;
+      height: 200%;
+      background: linear-gradient(
+        105deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0) 30%,
+        rgba(255, 255, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0) 70%,
+        transparent 100%
+      );
+      transform: skewX(-20deg);
+      animation: marquee-shine 6s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    @keyframes marquee-shine {
+      0%   { left: -75%; opacity: 0; }
+      8%   { opacity: 1; }
+      55%  { left: 160%; opacity: 1; }
+      100% { left: 160%; opacity: 0; }
+    }
+
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee-scroll 30s linear infinite;
+      position: relative;
+      z-index: 1;
+    }
+
+    .marquee-track span {
+      flex-shrink: 0;
+      padding: 0 3rem;
+      font-size: clamp(0.8rem, 1.5vw, 1rem);
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #fff;
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .marquee-track .marquee-dot {
+      padding: 0 1.5rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    @keyframes marquee-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ---- PERSONAGENS ---- */
+    #personagens {
+      position: relative; z-index: 6;
+      padding: 6rem clamp(1rem, 4vw, 2.5rem) 4rem;
+      overflow: visible;
+    }
+
+    #personagens::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        /* Star dust — tiny bright specks */
+        radial-gradient(1px 1px at 15% 25%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 72% 18%, rgba(200, 180, 255, 0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 45% 65%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 42%, rgba(180, 200, 255, 0.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 30% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+        /* Core nebula glow — deep purple */
+        radial-gradient(ellipse 80% 60% at 35% 40%, rgba(88, 28, 180, 0.55) 0%, rgba(60, 20, 140, 0.2) 40%, transparent 70%),
+        /* Secondary nebula arm — electric blue */
+        radial-gradient(ellipse 70% 50% at 70% 55%, rgba(30, 60, 200, 0.45) 0%, rgba(20, 40, 160, 0.15) 45%, transparent 75%),
+        /* Hot core — bright violet accent */
+        radial-gradient(ellipse 40% 35% at 50% 45%, rgba(140, 60, 220, 0.4) 0%, rgba(100, 40, 180, 0.1) 50%, transparent 80%),
+        /* Outer haze — indigo spread */
+        radial-gradient(ellipse 90% 80% at 55% 50%, rgba(40, 20, 120, 0.35) 0%, rgba(20, 10, 80, 0.1) 50%, transparent 85%),
+        /* Subtle warm edge — magenta whisper */
+        radial-gradient(ellipse 50% 40% at 80% 30%, rgba(160, 40, 140, 0.2) 0%, transparent 60%),
+        /* Cool edge — cyan whisper */
+        radial-gradient(ellipse 45% 50% at 15% 70%, rgba(30, 100, 180, 0.18) 0%, transparent 55%),
+        /* Base field */
+        linear-gradient(170deg, #06041c 0%, #0d0833 25%, #120a3d 50%, #0a0630 75%, #06041c 100%);
+      z-index: 0;
+    }
+
+    #personagens::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        /* Animated-feel soft glow layers */
+        radial-gradient(ellipse 60% 40% at 25% 35%, rgba(100, 50, 200, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 75% 60%, rgba(40, 80, 220, 0.1) 0%, transparent 55%);
+      z-index: 0;
+      mix-blend-mode: screen;
+      opacity: 0.7;
+    }
+
+    .personagens-titulo {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative; z-index: 1;
+    }
+
+    .personagens-eyebrow {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent-star);
+      margin-bottom: 0.8rem;
+      opacity: 0;
+    }
+
+    .personagens-titulo h2 {
+      font-size: clamp(2.2rem, 5.5vw, 4rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .letter {
+      display: inline-block;
+      opacity: 0;
+    }
+    .letter-space {
+      display: inline-block;
+      width: 0.3em;
+    }
+
+    .personagens-titulo p {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 0.8rem;
+      opacity: 0;
+    }
+
+    .personagens-list {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      height: 1100px;
+    }
+
+    .char-card {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      opacity: 0;
+      will-change: transform;
+      cursor: default;
+    }
+
+    .char-card[data-char="mario"]    { left: 4%;   top: 2%;   }
+    .char-card[data-char="luigi"]    { right: 6%;  top: 8%;   }
+    .char-card[data-char="peach"]    { left: 32%;  top: 30%;  }
+    .char-card[data-char="rosalina"] { right: 2%;  top: 42%;  }
+    .char-card[data-char="yoshi"]    { left: 2%;   top: 58%;  }
+    .char-card[data-char="bowser"]   { right: 22%; top: 68%;  }
+
+    .char-img-wrap {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      transition: transform 0.6s var(--ease-spring);
+    }
+
+    .char-card:hover .char-img-wrap {
+      transform: translateY(-10px) scale(1.06);
+    }
+
+    .char-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 6px 30px rgba(106, 60, 188, 0.35));
+      transition: filter 0.6s var(--ease-out-expo);
+    }
+
+    .char-card:hover .char-img-wrap img {
+      filter: drop-shadow(0 16px 50px rgba(92, 224, 216, 0.3)) drop-shadow(0 4px 20px rgba(106, 60, 188, 0.4));
+    }
+
+    .char-name {
+      margin: 0.8rem 0 0;
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: 0.01em;
+      transition: color 0.3s;
+    }
+
+    .char-card:hover .char-name {
+      color: var(--accent-star);
+    }
+
+    .char-card[data-char="mario"] .char-img-wrap    { width: 400px; height: 400px; }
+    .char-card[data-char="rosalina"] .char-img-wrap { width: 350px; height: 350px; }
+    .char-card[data-char="luigi"] .char-img-wrap    { width: 400px; height: 400px; }
+    .char-card[data-char="peach"] .char-img-wrap    { width: 280px; height: 280px; }
+    .char-card[data-char="yoshi"] .char-img-wrap    { width: 400px; height: 400px; }
+    .char-card[data-char="bowser"] .char-img-wrap   { width: 260px; height: 260px; }
+
+    @media (max-width: 768px) {
+      .personagens-list { height: 1100px; }
+      .char-card[data-char="mario"]    { left: 5%;   top: 0%;  }
+      .char-card[data-char="luigi"]    { right: 5%;  top: 12%; }
+      .char-card[data-char="peach"]    { left: 10%;  top: 30%; }
+      .char-card[data-char="rosalina"] { right: 5%;  top: 45%; }
+      .char-card[data-char="yoshi"]    { left: 5%;   top: 62%; }
+      .char-card[data-char="bowser"]   { right: 10%; top: 78%; }
+      .char-img-wrap, .char-card[data-char="mario"] .char-img-wrap,
+      .char-card[data-char="rosalina"] .char-img-wrap,
+      .char-card[data-char="luigi"] .char-img-wrap,
+      .char-card[data-char="peach"] .char-img-wrap,
+      .char-card[data-char="yoshi"] .char-img-wrap,
+      .char-card[data-char="bowser"] .char-img-wrap {
+        width: 180px; height: 180px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .personagens-list { height: 1000px; }
+      .char-img-wrap, .char-card[data-char="mario"] .char-img-wrap,
+      .char-card[data-char="rosalina"] .char-img-wrap,
+      .char-card[data-char="luigi"] .char-img-wrap,
+      .char-card[data-char="peach"] .char-img-wrap,
+      .char-card[data-char="yoshi"] .char-img-wrap,
+      .char-card[data-char="bowser"] .char-img-wrap {
+        width: 140px; height: 140px;
+      }
+      .char-name { font-size: 0.95rem; }
+    }
+
+    /* ---- TRAILERS ---- */
+    #trailers {
+      position: relative;
+      z-index: 1;
+      padding: 6rem 1.5rem 6rem;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(ellipse at 14% 18%, rgba(0, 228, 255, 0.38) 0%, transparent 44%),
+        radial-gradient(ellipse at 84% 20%, rgba(255, 92, 190, 0.34) 0%, transparent 42%),
+        radial-gradient(ellipse at 72% 78%, rgba(122, 87, 255, 0.34) 0%, transparent 46%),
+        radial-gradient(ellipse at 28% 72%, rgba(0, 180, 255, 0.26) 0%, transparent 48%),
+        linear-gradient(180deg, #090421 0%, #10183d 30%, #171f4f 55%, #10183d 80%, #090421 100%);
+      border-top: 1px solid rgba(156, 223, 255, 0.38);
+      border-bottom: 1px solid rgba(180, 136, 255, 0.26);
+    }
+
+    #trailers-shader {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    #trailers::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(5, 6, 20, 0.76) 0%, transparent 12%, transparent 88%, rgba(5, 6, 20, 0.82) 100%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #trailers::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(1px 1px at 22% 30%, rgba(175, 236, 255, 0.34) 0%, transparent 100%),
+        radial-gradient(1px 1px at 76% 18%, rgba(255, 182, 235, 0.28) 0%, transparent 100%),
+        radial-gradient(1.2px 1.2px at 58% 64%, rgba(198, 180, 255, 0.26) 0%, transparent 100%);
+      opacity: 0.82;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .trailers-sep {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 56px;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        linear-gradient(to bottom, rgba(170, 236, 255, 0.24) 0%, rgba(207, 166, 255, 0.14) 34%, transparent 100%);
+      mix-blend-mode: screen;
+    }
+
+    .trailers-watermark {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(4rem, 18vw, 14rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: rgba(255, 255, 255, 0.03);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 0;
+      user-select: none;
+    }
+
+    .trailers-head {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .trailers-eyebrow {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent-star);
+      margin-bottom: 0.8rem;
+      opacity: 0;
+    }
+
+    .trailers-head h2 {
+      font-size: clamp(2.2rem, 5.5vw, 4rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .trailers-head p {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 0.8rem;
+      opacity: 0;
+    }
+
+    .trailers-carousel {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* Double-bezel: outer shell */
+    .trailers-viewport-shell {
+      padding: 6px;
+      border-radius: 28px;
+      background: rgba(92, 224, 216, 0.03);
+      border: 1px solid rgba(92, 224, 216, 0.08);
+      box-shadow:
+        0 20px 60px rgba(6, 5, 26, 0.5),
+        inset 0 1px 0 rgba(92, 224, 216, 0.06);
+    }
+
+    .trailers-viewport {
+      overflow: hidden;
+      border-radius: 22px;
+      background: var(--bg-deep);
+    }
+
+    .trailers-track {
+      display: flex;
+      transition: transform 0.6s var(--ease-out-expo);
+      will-change: transform;
+    }
+
+    .trailer-slide {
+      flex: 0 0 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    /* Neon border — animated multicolor gradient */
+    .trailer-neon {
+      position: relative;
+      padding: 3px;
+      border-radius: 24px;
+      background: linear-gradient(
+        125deg,
+        var(--accent-star) 0%,
+        #ff6b4a 18%,
+        var(--cosmic-rose) 35%,
+        var(--cosmic-purple) 55%,
+        var(--cosmic-cyan) 75%,
+        var(--accent-star) 100%
+      );
+      background-size: 300% 300%;
+      box-shadow:
+        0 0 24px rgba(106, 60, 188, 0.35),
+        0 0 48px rgba(92, 224, 216, 0.15),
+        0 0 72px rgba(255, 210, 63, 0.08);
+      animation: neon-shift 8s ease-in-out infinite;
+    }
+
+    @keyframes neon-shift {
+      0%, 100% { background-position: 0% 40%; }
+      50%      { background-position: 100% 60%; }
+    }
+
+    .trailer-inner {
+      aspect-ratio: 16 / 9;
+      position: relative;
+      overflow: hidden;
+      border-radius: 21px;
+      background: var(--bg-deep);
+    }
+
+    .trailer-inner iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    /* Spotlight border on hover */
+    .trailers-viewport-shell {
+      transition: box-shadow 0.6s var(--ease-out-expo);
+    }
+
+    .trailers-viewport-shell:hover {
+      box-shadow:
+        0 24px 72px rgba(6, 5, 26, 0.6),
+        0 0 50px rgba(92, 224, 216, 0.08),
+        0 0 30px rgba(106, 60, 188, 0.06),
+        inset 0 1px 0 rgba(92, 224, 216, 0.1);
+    }
+
+    .trailers-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .trailers-arrow {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(92, 224, 216, 0.12);
+      background: rgba(92, 224, 216, 0.04);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s var(--ease-spring);
+    }
+
+    .trailers-arrow:hover {
+      background: rgba(92, 224, 216, 0.1);
+      border-color: rgba(92, 224, 216, 0.25);
+      transform: scale(1.08);
+    }
+
+    .trailers-arrow:active {
+      transform: scale(0.95);
+    }
+
+    .trailers-arrow svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 1.5;
+    }
+
+    .trailers-arrow:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .trailers-dots {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .trailers-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      border: none;
+      padding: 0;
+      background: rgba(92, 224, 216, 0.2);
+      cursor: pointer;
+      transition: all 0.4s var(--ease-spring);
+    }
+
+    .trailers-dot[aria-current="true"] {
+      background: var(--cosmic-cyan);
+      transform: scale(1.4);
+      box-shadow: 0 0 10px rgba(92, 224, 216, 0.5);
+    }
+
+    .trailers-dot:hover {
+      background: rgba(92, 224, 216, 0.45);
+    }
+
+    @media (max-width: 768px) {
+      #trailers { padding: 4rem 1rem 5rem; }
+      .trailers-nav { gap: 0.75rem; }
+      .trailers-arrow { width: 40px; height: 40px; }
+      .trailers-viewport-shell { padding: 4px; border-radius: 22px; }
+      .trailers-viewport { border-radius: 18px; }
+      .trailer-inner { border-radius: 18px; }
+      .floating-nav { display: none; }
+    }
+
+    /* ---- FOOTER ---- */
+    .site-footer {
+      position: relative;
+      z-index: 1;
+      padding: 4rem 1.5rem;
+      text-align: center;
+      border-top: 1px solid rgba(92, 224, 216, 0.05);
+    }
+
+    .footer-logo {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin-bottom: 0.6rem;
+    }
+
+    .footer-copy {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ---- RESPONSIVO ---- */
+    @media (max-width: 768px) {
+      #planet-wrap { width: 520px; height: 520px; left: calc(50% - 260px); bottom: -48%; }
+      #mario-img   { width: 140px; top: 28%; left: 3%; }
+      #yoshi-img   { width: 78px; top: 23%; right: 23%; }
+      .hero-text   { top: clamp(42%, 48vh, 56%); }
+      .hero-title  { font-size: 2.4rem; }
+    }
+    @media (max-width: 480px) {
+      #planet-wrap { width: 400px; height: 400px; left: calc(50% - 200px); bottom: -50%; }
+      #mario-img   { width: 100px; top: 30%; left: 2%; }
+      #yoshi-img   { width: 58px;  top: 26%; right: 2%; }
+      .hero-text   { top: clamp(44%, 50vh, 58%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      .marquee-track { animation: none; }
+      .trailers-track { transition-duration: 0.01ms; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Nav -->
+  <nav class="floating-nav" id="floating-nav" aria-label="Main navigation">
+    <span class="nav-logo">SMG</span>
+    <div class="nav-divider" aria-hidden="true"></div>
+    <a href="#personagens">Personagens</a>
+    <a href="#trailers">Trailers</a>
+  </nav>
+
+  <canvas id="starfield" aria-hidden="true"></canvas>
+
+  <!-- Floating characters — fixed, controlled by scroll JS -->
+  <video id="mario-img" class="hero-character" autoplay loop muted playsinline preload="auto">
+    <source src="src/videos/mario-clip-alpha.webm" type="video/webm" />
+    <source src="src/videos/mario-clip-min.mp4" type="video/mp4" />
+  </video>
+  <video id="yoshi-img" class="hero-character" autoplay loop muted playsinline preload="auto">
+    <source src="src/videos/yoshi-video-alpha.webm" type="video/webm" />
+    <source src="src/videos/yoshi-video-min.mp4" type="video/mp4" />
+  </video>
+
+  <section id="hero">
+    <div class="hero-sticky">
+
+      <div class="hero-planet-glow" aria-hidden="true"></div>
+
+      <div id="planet-wrap" aria-hidden="true">
+        <video id="planet-img" autoplay loop muted playsinline preload="auto">
+          <source src="src/videos/planet-3d-alpha.webm" type="video/webm" />
+          <source src="src/videos/planet-3d-min.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      <div class="hero-text">
+        <div class="hero-eyebrow">Nos cinemas agora</div>
+        <h1 class="hero-title">Super Mario<br><span>Galaxy: O Filme</span></h1>
+        <p class="hero-subtitle">Uma aventura epica pelo cosmos</p>
+        <a class="hero-cta" href="#trailers">
+          <span class="cta-label">Watch Trailer</span>
+          <span class="cta-icon">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path clip-rule="evenodd" fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/>
+            </svg>
+          </span>
+        </a>
+      </div>
+
+      <div class="luma-star" id="luma-1" aria-hidden="true">
+        <img src="src/videos/estrela-min.webp" alt="" />
+      </div>
+      <div class="luma-star" id="luma-2" aria-hidden="true">
+        <img src="src/videos/estrela-min.webp" alt="" />
+      </div>
+      <div class="luma-star" id="luma-3" aria-hidden="true">
+        <img src="src/videos/estrela-min.webp" alt="" />
+      </div>
+
+      <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
+        <span>Role para explorar</span>
+        <div class="scroll-arrow"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee-section" aria-hidden="true">
+    <div class="marquee-track">
+      <span>Super Mario Galaxy</span><span class="marquee-dot">/</span>
+      <span>Nos cinemas</span><span class="marquee-dot">/</span>
+      <span>Uma aventura pelo cosmos</span><span class="marquee-dot">/</span>
+      <span>Mario</span><span class="marquee-dot">/</span>
+      <span>Luigi</span><span class="marquee-dot">/</span>
+      <span>Rosalina</span><span class="marquee-dot">/</span>
+      <span>Peach</span><span class="marquee-dot">/</span>
+      <span>Yoshi</span><span class="marquee-dot">/</span>
+      <span>Bowser Jr.</span><span class="marquee-dot">/</span>
+      <!-- duplicate for seamless loop -->
+      <span>Super Mario Galaxy</span><span class="marquee-dot">/</span>
+      <span>Nos cinemas</span><span class="marquee-dot">/</span>
+      <span>Uma aventura pelo cosmos</span><span class="marquee-dot">/</span>
+      <span>Mario</span><span class="marquee-dot">/</span>
+      <span>Luigi</span><span class="marquee-dot">/</span>
+      <span>Rosalina</span><span class="marquee-dot">/</span>
+      <span>Peach</span><span class="marquee-dot">/</span>
+      <span>Yoshi</span><span class="marquee-dot">/</span>
+      <span>Bowser Jr.</span><span class="marquee-dot">/</span>
+    </div>
+  </div>
+
+  <!-- Personagens -->
+  <section id="personagens">
+    <div class="personagens-titulo">
+      <div class="personagens-eyebrow">Conhega o elenco</div>
+      <h2>Personagens</h2>
+      <p>Os herois e viloes desta aventura galactica</p>
+    </div>
+
+    <div class="personagens-list">
+
+      <div class="char-card" data-char="mario" data-speed="-0.15" data-rotate="3">
+        <div class="char-img-wrap">
+          <img src="src/videos/mario-original.webp" alt="Mario" loading="lazy">
+        </div>
+        <h3 class="char-name">Mario</h3>
+      </div>
+
+      <div class="char-card" data-char="luigi" data-speed="0.12" data-rotate="-2">
+        <div class="char-img-wrap">
+          <img src="src/videos/luigi.webp" alt="Luigi" loading="lazy">
+        </div>
+        <h3 class="char-name">Luigi</h3>
+      </div>
+
+      <div class="char-card" data-char="peach" data-speed="-0.08" data-rotate="1.5">
+        <div class="char-img-wrap">
+          <img src="src/videos/peach.webp" alt="Peach" loading="lazy">
+        </div>
+        <h3 class="char-name">Peach</h3>
+      </div>
+
+      <div class="char-card" data-char="rosalina" data-speed="0.18" data-rotate="-3">
+        <div class="char-img-wrap">
+          <img src="src/videos/rosalina.webp" alt="Rosalina" loading="lazy">
+        </div>
+        <h3 class="char-name">Rosalina</h3>
+      </div>
+
+      <div class="char-card" data-char="yoshi" data-speed="-0.1" data-rotate="2">
+        <div class="char-img-wrap">
+          <img src="src/videos/yoshi-perso.webp" alt="Yoshi" loading="lazy">
+        </div>
+        <h3 class="char-name">Yoshi</h3>
+      </div>
+
+      <div class="char-card" data-char="bowser" data-speed="0.14" data-rotate="-1.5">
+        <div class="char-img-wrap">
+          <img src="src/videos/bowser-jr.webp" alt="Bowser Jr." loading="lazy">
+        </div>
+        <h3 class="char-name">Bowser Jr.</h3>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Trailers -->
+  <section id="trailers" aria-labelledby="trailers-heading">
+    <div class="trailers-sep" aria-hidden="true"></div>
+    <div id="trailers-shader" aria-hidden="true"></div>
+    <div class="trailers-watermark" aria-hidden="true">TRAILERS</div>
+    <div class="trailers-head">
+      <div class="trailers-eyebrow">Assista agora</div>
+      <h2 id="trailers-heading">Trailers oficiais</h2>
+      <p>Clipes da aventura no espaco</p>
+    </div>
+
+    <div class="trailers-carousel">
+      <div class="trailers-viewport-shell">
+        <div class="trailers-viewport">
+          <div class="trailers-track" id="trailers-track" role="list">
+            <div class="trailer-slide" role="listitem" data-index="0">
+              <div class="trailer-neon">
+                <div class="trailer-inner">
+                  <iframe
+                    title="Super Mario Galaxy: O Filme - trailer oficial"
+                    data-trailer-src="https://www.youtube-nocookie.com/embed/TnGl01FkMMo?rel=0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    loading="lazy"></iframe>
+                </div>
+              </div>
+            </div>
+            <div class="trailer-slide" role="listitem" data-index="1">
+              <div class="trailer-neon">
+                <div class="trailer-inner">
+                  <iframe
+                    title="Super Mario Galaxy: O Filme - trailer IMAX"
+                    data-trailer-src="https://www.youtube-nocookie.com/embed/hN5wQMCLGRc?rel=0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    loading="lazy"></iframe>
+                </div>
+              </div>
+            </div>
+            <div class="trailer-slide" role="listitem" data-index="2">
+              <div class="trailer-neon">
+                <div class="trailer-inner">
+                  <iframe
+                    title="Super Mario Galaxy: O Filme - trailer final"
+                    data-trailer-src="https://www.youtube-nocookie.com/embed/Cf9VOAxuqiU?rel=0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    loading="lazy"></iframe>
+                </div>
+              </div>
+            </div>
+            <div class="trailer-slide" role="listitem" data-index="3">
+              <div class="trailer-neon">
+                <div class="trailer-inner">
+                  <iframe
+                    title="Super Mario Galaxy: O Filme - teaser"
+                    data-trailer-src="https://www.youtube-nocookie.com/embed/QVD48BOcwms?rel=0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    loading="lazy"></iframe>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trailers-nav">
+        <button type="button" class="trailers-arrow" id="trailers-prev" aria-label="Trailer anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="trailers-dots" id="trailers-dots" role="tablist" aria-label="Selecionar trailer"></div>
+        <button type="button" class="trailers-arrow" id="trailers-next" aria-label="Proximo trailer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-logo">Super Mario Galaxy: O Filme</div>
+    <p class="footer-copy">Projeto conceitual para fins educacionais. Nintendo, Mario e personagens relacionados sao marcas registradas da Nintendo Co., Ltd.</p>
+  </footer>
+
+  <script>
+    const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function remap(v, inMin, inMax, outMin, outMax) {
+      if (v <= inMin) return outMin;
+      if (v >= inMax) return outMax;
+      return outMin + (outMax - outMin) * ((v - inMin) / (inMax - inMin));
+    }
+
+    function heroProgress() {
+      const hero = document.getElementById('hero');
+      const scrolled = window.scrollY - hero.offsetTop;
+      const total = hero.offsetHeight - window.innerHeight;
+      if (total <= 0) return 1;
+      return Math.max(0, Math.min(1, scrolled / total));
+    }
+
+    /* ---- FLOATING NAV ---- */
+    function initFloatingNav() {
+      const nav = document.getElementById('floating-nav');
+      if (!nav) return;
+
+      let lastScroll = 0;
+
+      window.addEventListener('scroll', () => {
+        const scrollY = window.scrollY;
+        const heroHeight = document.getElementById('hero').offsetHeight * 0.6;
+
+        if (scrollY > heroHeight) {
+          nav.classList.add('visible');
+        } else {
+          nav.classList.remove('visible');
+        }
+        lastScroll = scrollY;
+      }, { passive: true });
+    }
+
+    /* ---- STARFIELD ---- */
+    function initStarfield() {
+      const canvas = document.getElementById('starfield');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      /* Star color palette — Galaxy authentic */
+      const starColors = [
+        [255, 248, 220],  /* warm white */
+        [255, 210, 63],   /* Luma yellow */
+        [92, 224, 216],   /* Rosalina cyan */
+        [200, 160, 255],  /* cosmic lavender */
+        [255, 200, 220],  /* stardust rose */
+      ];
+
+      /* Nebula clouds — large, slow-drifting color patches */
+      const nebulae = [];
+      const nebulaColors = [
+        { r: 106, g: 60, b: 188 },  /* cosmic purple */
+        { r: 92, g: 224, b: 216 },  /* cyan */
+        { r: 200, g: 80, b: 140 },  /* rose */
+        { r: 40, g: 70, b: 160 },   /* deep blue */
+      ];
+      for (let i = 0; i < 5; i++) {
+        const c = nebulaColors[i % nebulaColors.length];
+        nebulae.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          radius: 150 + Math.random() * 250,
+          color: c,
+          opacity: 0.025 + Math.random() * 0.03,
+          driftX: (Math.random() - 0.5) * 0.15,
+          driftY: (Math.random() - 0.5) * 0.1,
+          pulsePhase: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.2 + Math.random() * 0.3,
+        });
+      }
+
+      /* Stars — more variety, brighter highlights */
+      for (let i = 0; i < 300; i++) {
+        const colorIdx = Math.random() < 0.6 ? 0 : Math.floor(Math.random() * starColors.length);
+        const isBright = Math.random() < 0.08;
+        stars.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          size: isBright ? (2.5 + Math.random() * 1.5) : (Math.random() * 1.8 + 0.2),
+          base: isBright ? (0.7 + Math.random() * 0.3) : (Math.random() * 0.4 + 0.4),
+          phase: Math.random() * Math.PI * 2,
+          speed: isBright ? (1.0 + Math.random() * 1.5) : (Math.random() * 0.5 + 0.3),
+          color: starColors[colorIdx],
+          bright: isBright,
+          twinkleRate: 2 + Math.random() * 4,
+        });
+      }
+
+      /* Shooting stars */
+      let shootingStars = [];
+      function maybeSpawnShootingStar() {
+        if (shootingStars.length < 6 && Math.random() < 0.018) {
+          const angle = (25 + Math.random() * 30) * Math.PI / 180;
+          const speed = 5 + Math.random() * 8;
+          const colorPool = [starColors[0], starColors[2], starColors[1], [200, 180, 255]];
+          shootingStars.push({
+            x: Math.random() * canvas.width * 1.2 - canvas.width * 0.1,
+            y: Math.random() * canvas.height * 0.4,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1.0,
+            decay: 0.008 + Math.random() * 0.012,
+            length: 50 + Math.random() * 90,
+            color: colorPool[Math.floor(Math.random() * colorPool.length)],
+          });
+        }
+      }
+
+      (function draw(t) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        /* Nebulae — soft glowing clouds */
+        nebulae.forEach(n => {
+          const pulseFactor = 0.8 + 0.2 * Math.sin(t * 0.001 * n.pulseSpeed + n.pulsePhase);
+          n.x += n.driftX;
+          n.y += n.driftY;
+          if (n.x < -n.radius) n.x = canvas.width + n.radius;
+          if (n.x > canvas.width + n.radius) n.x = -n.radius;
+          if (n.y < -n.radius) n.y = canvas.height + n.radius;
+          if (n.y > canvas.height + n.radius) n.y = -n.radius;
+
+          const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.radius * pulseFactor);
+          grad.addColorStop(0, `rgba(${n.color.r},${n.color.g},${n.color.b},${n.opacity * pulseFactor})`);
+          grad.addColorStop(0.4, `rgba(${n.color.r},${n.color.g},${n.color.b},${n.opacity * 0.4 * pulseFactor})`);
+          grad.addColorStop(1, `rgba(${n.color.r},${n.color.g},${n.color.b},0)`);
+          ctx.fillStyle = grad;
+          ctx.fillRect(n.x - n.radius, n.y - n.radius, n.radius * 2, n.radius * 2);
+        });
+
+        /* Stars */
+        stars.forEach(s => {
+          const [cr, cg, cb] = s.color;
+
+          if (s.bright) {
+            /* Bright stars: sharper twinkle + cross glow */
+            const twinkle = 0.3 + 0.7 * Math.abs(Math.sin(t * 0.001 * s.twinkleRate + s.phase));
+            const op = s.base * twinkle;
+            const r = s.size * (0.85 + 0.15 * twinkle);
+
+            /* Cross/spike glow */
+            ctx.save();
+            ctx.globalAlpha = op * 0.35;
+            ctx.strokeStyle = `rgb(${cr},${cg},${cb})`;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(s.x - r * 4, s.y);
+            ctx.lineTo(s.x + r * 4, s.y);
+            ctx.moveTo(s.x, s.y - r * 4);
+            ctx.lineTo(s.x, s.y + r * 4);
+            ctx.stroke();
+            ctx.restore();
+
+            /* Outer halo */
+            const halo = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 5);
+            halo.addColorStop(0, `rgba(${cr},${cg},${cb},${op * 0.25})`);
+            halo.addColorStop(0.5, `rgba(${cr},${cg},${cb},${op * 0.06})`);
+            halo.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+            ctx.fillStyle = halo;
+            ctx.fillRect(s.x - r * 5, s.y - r * 5, r * 10, r * 10);
+
+            /* Core */
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(${cr},${cg},${cb},${op})`;
+            ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            /* White-hot center */
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255,255,255,${op * 0.8})`;
+            ctx.arc(s.x, s.y, r * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            /* Normal stars: gentle pulse */
+            const pulse = 0.45 + 0.55 * Math.sin(t * 0.001 * s.speed + s.phase);
+            const op = s.base * pulse;
+            const r = s.size * (0.92 + 0.08 * pulse);
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(${cr},${cg},${cb},${op})`;
+            ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            if (s.size > 1.2) {
+              ctx.beginPath();
+              ctx.fillStyle = `rgba(${cr},${cg},${cb},${op * 0.12})`;
+              ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        });
+
+        /* Shooting stars */
+        maybeSpawnShootingStar();
+        shootingStars = shootingStars.filter(ss => {
+          ss.x += ss.vx;
+          ss.y += ss.vy;
+          ss.life -= ss.decay;
+          if (ss.life <= 0) return false;
+
+          const [cr, cg, cb] = ss.color;
+          const grad = ctx.createLinearGradient(
+            ss.x, ss.y,
+            ss.x - (ss.vx / Math.hypot(ss.vx, ss.vy)) * ss.length,
+            ss.y - (ss.vy / Math.hypot(ss.vx, ss.vy)) * ss.length
+          );
+          grad.addColorStop(0, `rgba(255,255,255,${ss.life * 0.9})`);
+          grad.addColorStop(0.3, `rgba(${cr},${cg},${cb},${ss.life * 0.6})`);
+          grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+
+          ctx.save();
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 1.5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(ss.x, ss.y);
+          ctx.lineTo(
+            ss.x - (ss.vx / Math.hypot(ss.vx, ss.vy)) * ss.length * ss.life,
+            ss.y - (ss.vy / Math.hypot(ss.vx, ss.vy)) * ss.length * ss.life
+          );
+          ctx.stroke();
+          ctx.restore();
+          return true;
+        });
+
+        requestAnimationFrame(draw);
+      })(0);
+    }
+
+    /* ---- ENTRANCE ---- */
+    function initEntrance() {
+      if (REDUCED) {
+        anime.set(['.hero-eyebrow','.hero-title','.hero-subtitle','.hero-cta','#planet-wrap','#mario-img','#yoshi-img','#scroll-hint','.luma-star'],
+          { opacity: 1 });
+        return;
+      }
+
+      anime.timeline({ defaults: { easing: 'easeOutExpo' } })
+        .add({ targets: '#planet-wrap',
+          opacity: [0, 1], translateY: [60, 0], duration: 1100, easing: 'easeOutCubic' })
+        .add({ targets: '#mario-img',
+          opacity: [0, 1], translateX: [-40, 0], duration: 800, easing: 'easeOutCubic' }, '-=700')
+        .add({ targets: '#yoshi-img',
+          opacity: [0, 1], translateX: [40, 0], duration: 800, easing: 'easeOutCubic' }, '-=600')
+        .add({ targets: '.hero-eyebrow',
+          opacity: [0, 1], translateY: [12, 0], scale: [0.9, 1], duration: 600 }, '-=500')
+        .add({ targets: '.hero-title',
+          opacity: [0, 1], translateY: [30, 0], duration: 800 }, '-=400')
+        .add({ targets: '.hero-subtitle',
+          opacity: [0, 1], translateY: [15, 0], duration: 600 }, '-=500')
+        .add({ targets: '.hero-cta',
+          opacity: [0, 1], translateY: [10, 0], duration: 500 }, '-=350')
+        .add({ targets: '#scroll-hint',
+          opacity: [0, 1], duration: 500 }, '-=200');
+    }
+
+    /* ---- SCROLL ANIMATION ---- */
+    function initScrollAnim() {
+      if (REDUCED) return;
+
+      const $scrollHint = document.getElementById('scroll-hint');
+      const $heroText = document.querySelector('.hero-text');
+      const $planetWrap = document.getElementById('planet-wrap');
+      const $mario = document.getElementById('mario-img');
+      const $yoshi = document.getElementById('yoshi-img');
+      const $luma1 = document.getElementById('luma-1');
+      const $luma2 = document.getElementById('luma-2');
+      const $luma3 = document.getElementById('luma-3');
+      const $glow = document.querySelector('.hero-planet-glow');
+      const $personagens = document.getElementById('personagens');
+
+      /* Extended progress: 0→1 across hero + personagens section */
+      function extendedProgress() {
+        const hero = document.getElementById('hero');
+        const startY = hero.offsetTop;
+        const endY = $personagens.offsetTop + $personagens.offsetHeight;
+        const total = endY - startY - window.innerHeight;
+        if (total <= 0) return 1;
+        return Math.max(0, Math.min(1, (window.scrollY - startY) / total));
+      }
+
+      function update() {
+        const p = heroProgress();
+        const ep = extendedProgress();
+
+        $scrollHint.style.opacity = remap(p, 0, 0.10, 1, 0);
+
+        const textY = remap(p, 0, 0.85, 0, -30);
+        $heroText.style.transform = `translateY(${textY}vh)`;
+        $heroText.style.opacity = remap(p, 0.85, 0.98, 1, 0);
+
+        const pScale = remap(p, 0.05, 0.85, 1, 8);
+        const pY = remap(p, 0.05, 0.85, 0, -12);
+        $planetWrap.style.transform = `translateY(${pY}vh) scale(${pScale})`;
+        $planetWrap.style.opacity = remap(p, 0.82, 0.98, 1, 0);
+
+        /* Fade out ambos antes do marquee */
+        const charFade = remap(ep, 0.35, 0.5, 1, 0);
+
+        /* Mario — desce pelo scroll */
+        const mScroll = remap(ep, 0, 0.6, 0, 50);
+        const mFloat = Math.sin(Date.now() * 0.001) * 8;
+        $mario.style.transform = `translateY(${mScroll + mFloat}vh)`;
+        $mario.style.opacity = charFade;
+
+        /* Yoshi — mesma velocidade */
+        const yScroll = remap(ep, 0, 0.6, 0, 50);
+        const yFloat = Math.sin(Date.now() * 0.0008 + 1.5) * 10;
+        $yoshi.style.transform = `scaleX(-1) translateY(${yScroll + yFloat}vh)`;
+        $yoshi.style.opacity = charFade;
+
+        const lumaOpIn = remap(p, 0.05, 0.15, 0, 1);
+        const lumaOpOut = remap(p, 0.75, 0.90, 1, 0);
+        const lumaOp = Math.min(lumaOpIn, lumaOpOut);
+
+        $luma1.style.transform = `translateY(${remap(p, 0.05, 0.85, 20, -120)}vh)`;
+        $luma1.style.opacity = lumaOp;
+        $luma2.style.transform = `translateY(${remap(p, 0.05, 0.85, 15, -90)}vh)`;
+        $luma2.style.opacity = lumaOp;
+        $luma3.style.transform = `translateY(${remap(p, 0.05, 0.85, 10, -65)}vh)`;
+        $luma3.style.opacity = lumaOp;
+
+        $glow.style.opacity = remap(p, 0.82, 0.98, 1, 0);
+
+      }
+
+      /* Always run — float uses Date.now() so it must tick every frame */
+      window.addEventListener('scroll', () => {}, { passive: true });
+
+      (function loop() {
+        update();
+        requestAnimationFrame(loop);
+      })();
+    }
+
+    /* ---- SPLIT LETTERS ---- */
+    function splitLetters(el) {
+      const text = el.textContent;
+      el.innerHTML = '';
+      text.split('').forEach(ch => {
+        if (ch === ' ') {
+          const space = document.createElement('span');
+          space.className = 'letter-space';
+          el.appendChild(space);
+        } else {
+          const span = document.createElement('span');
+          span.className = 'letter';
+          span.textContent = ch;
+          el.appendChild(span);
+        }
+      });
+      return el.querySelectorAll('.letter');
+    }
+
+    /* ---- PERSONAGENS REVEAL ---- */
+    function initPersonagensReveal() {
+      const cards = document.querySelectorAll('.char-card');
+      const section = document.getElementById('personagens');
+      const allEls = document.querySelectorAll('.personagens-titulo h2, .personagens-titulo p, .personagens-eyebrow, .char-card');
+
+      if (REDUCED) {
+        allEls.forEach(el => { el.style.opacity = 1; el.style.transform = 'none'; });
+        return;
+      }
+
+      const persH2 = document.querySelector('.personagens-titulo h2');
+      const persLetters = persH2 ? splitLetters(persH2) : [];
+
+      const titleObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          anime.timeline({ easing: 'easeOutExpo' })
+            .add({ targets: '.personagens-eyebrow',
+              opacity: [0, 1], translateY: [10, 0], duration: 500 })
+            .add({ targets: persLetters,
+              opacity: [0, 1], translateY: [30, 0], rotateX: [90, 0],
+              duration: 600, delay: anime.stagger(35) }, '-=300')
+            .add({ targets: '.personagens-titulo p',
+              opacity: [0, 1], translateY: [15, 0], duration: 600 }, '-=300');
+          titleObs.unobserve(entry.target);
+        });
+      }, { threshold: 0.2 });
+      const tituloEl = document.querySelector('.personagens-titulo');
+      if (tituloEl) titleObs.observe(tituloEl);
+
+      cards.forEach((card, i) => {
+        const obs = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            anime({
+              targets: card,
+              opacity: [0, 1],
+              scale: [0.7, 1],
+              translateY: [60, 0],
+              duration: 900,
+              delay: i * 100,
+              easing: 'easeOutBack',
+            });
+            obs.unobserve(entry.target);
+          });
+        }, { threshold: 0.05 });
+        obs.observe(card);
+      });
+
+      let parallaxTicking = false;
+
+      function updateParallax() {
+        const rect = section.getBoundingClientRect();
+        const sectionCenter = rect.top + rect.height / 2;
+        const viewCenter = window.innerHeight / 2;
+        const offset = viewCenter - sectionCenter;
+
+        cards.forEach(card => {
+          const speed = parseFloat(card.dataset.speed) || 0;
+          const maxRot = parseFloat(card.dataset.rotate) || 0;
+          const yShift = offset * speed;
+          const rot = (offset / window.innerHeight) * maxRot;
+          card.style.transform = `translateY(${yShift}px) rotate(${rot}deg)`;
+        });
+        parallaxTicking = false;
+      }
+
+      window.addEventListener('scroll', () => {
+        if (!parallaxTicking) {
+          parallaxTicking = true;
+          requestAnimationFrame(updateParallax);
+        }
+      }, { passive: true });
+
+      updateParallax();
+    }
+
+    /* ---- TRAILERS CAROUSEL ---- */
+    function initTrailersCarousel() {
+      const track = document.getElementById('trailers-track');
+      const prev = document.getElementById('trailers-prev');
+      const next = document.getElementById('trailers-next');
+      const dotsWrap = document.getElementById('trailers-dots');
+      if (!track || !prev || !next || !dotsWrap) return;
+
+      const slides = Array.from(track.querySelectorAll('.trailer-slide'));
+      const n = slides.length;
+      let i = 0;
+
+      function iframeForSlide(slide) {
+        return slide.querySelector('iframe[data-trailer-src]');
+      }
+
+      function setIframeActive(slide, active) {
+        const iframe = iframeForSlide(slide);
+        if (!iframe) return;
+        const url = iframe.getAttribute('data-trailer-src');
+        if (active) {
+          if (!iframe.getAttribute('src')) iframe.setAttribute('src', url);
+        } else {
+          iframe.removeAttribute('src');
+        }
+      }
+
+      function render() {
+        track.style.transform = `translateX(-${i * 100}%)`;
+        prev.disabled = i <= 0;
+        next.disabled = i >= n - 1;
+        dotsWrap.querySelectorAll('.trailers-dot').forEach((btn, idx) => {
+          btn.setAttribute('aria-current', idx === i ? 'true' : 'false');
+        });
+        slides.forEach((slide, idx) => setIframeActive(slide, idx === i));
+      }
+
+      dotsWrap.innerHTML = '';
+      slides.forEach((_, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'trailers-dot';
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-label', `Trailer ${idx + 1} de ${n}`);
+        btn.addEventListener('click', () => { i = idx; render(); });
+        dotsWrap.appendChild(btn);
+      });
+
+      prev.addEventListener('click', () => { if (i > 0) { i--; render(); } });
+      next.addEventListener('click', () => { if (i < n - 1) { i++; render(); } });
+
+      let touchStartX = null;
+      track.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+      track.addEventListener('touchend', (e) => {
+        if (touchStartX == null) return;
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        touchStartX = null;
+        if (dx < -48 && i < n - 1) { i++; render(); }
+        else if (dx > 48 && i > 0) { i--; render(); }
+      }, { passive: true });
+
+      render();
+    }
+
+    /* ---- TRAILERS REVEAL ---- */
+    function initTrailersReveal() {
+      const carousel = document.querySelector('.trailers-carousel');
+      const nav = document.querySelector('.trailers-nav');
+      const watermark = document.querySelector('.trailers-watermark');
+
+      if (REDUCED) {
+        document.querySelectorAll('.trailers-head h2, .trailers-head p, .trailers-eyebrow').forEach(el => {
+          el.style.opacity = 1;
+        });
+        if (carousel) carousel.style.opacity = 1;
+        if (nav) nav.style.opacity = 1;
+        return;
+      }
+
+      if (carousel) { carousel.style.opacity = 0; carousel.style.transform = 'translateY(50px)'; }
+      if (nav) { nav.style.opacity = 0; }
+      if (watermark) { watermark.style.opacity = 0; }
+
+      const section = document.getElementById('trailers');
+      if (!section) return;
+
+      const trailersH2 = document.querySelector('.trailers-head h2');
+      const trailersLetters = trailersH2 ? splitLetters(trailersH2) : [];
+
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+
+          const tl = anime.timeline({ easing: 'easeOutExpo' });
+
+          if (watermark) {
+            tl.add({ targets: watermark,
+              opacity: [0, 1], duration: 1200 }, 0);
+          }
+
+          tl.add({ targets: '.trailers-eyebrow',
+            opacity: [0, 1], translateY: [10, 0], duration: 500 }, 100)
+          .add({ targets: trailersLetters,
+            opacity: [0, 1], translateY: [30, 0], rotateX: [90, 0],
+            duration: 600, delay: anime.stagger(25) }, 200)
+          .add({ targets: '.trailers-head p',
+            opacity: [0, 1], translateY: [15, 0], duration: 600 }, '-=300');
+
+          if (carousel) {
+            tl.add({ targets: carousel,
+              opacity: [0, 1], translateY: [50, 0], scale: [0.96, 1],
+              duration: 1000, easing: 'easeOutCubic' }, '-=400');
+          }
+
+          if (nav) {
+            tl.add({ targets: nav,
+              opacity: [0, 1], translateY: [15, 0],
+              duration: 600 }, '-=500');
+          }
+
+          obs.unobserve(entry.target);
+        });
+      }, { threshold: 0.12 });
+      obs.observe(section);
+    }
+
+    /* ---- TRAILERS SHADER ---- */
+    function initTrailersShader() {
+      const container = document.getElementById('trailers-shader');
+      if (!container || typeof THREE === 'undefined') return;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+
+      const section = document.getElementById('trailers');
+      const w = section.offsetWidth;
+      const h = section.offsetHeight;
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+      container.appendChild(renderer.domElement);
+
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          iTime: { value: 0 },
+          iResolution: { value: new THREE.Vector2(w, h) }
+        },
+        vertexShader: `void main() { gl_Position = vec4(position, 1.0); }`,
+        fragmentShader: `
+          uniform float iTime;
+          uniform vec2 iResolution;
+          #define NUM_OCTAVES 2
+
+          float rand(vec2 n) {
+            return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+          }
+          float noise(vec2 p) {
+            vec2 ip = floor(p);
+            vec2 u = fract(p);
+            u = u*u*(3.0-2.0*u);
+            float res = mix(
+              mix(rand(ip), rand(ip+vec2(1.0,0.0)), u.x),
+              mix(rand(ip+vec2(0.0,1.0)), rand(ip+vec2(1.0,1.0)), u.x), u.y);
+            return res*res;
+          }
+          float fbm(vec2 x) {
+            float v = 0.0, a = 0.3;
+            vec2 shift = vec2(100);
+            mat2 rot = mat2(cos(0.5),sin(0.5),-sin(0.5),cos(0.5));
+            for (int i = 0; i < NUM_OCTAVES; ++i) {
+              v += a*noise(x); x = rot*x*2.0+shift; a *= 0.4;
+            }
+            return v;
+          }
+          void main() {
+            vec2 shake = vec2(sin(iTime*1.2)*0.005, cos(iTime*2.1)*0.005);
+            vec2 p = ((gl_FragCoord.xy + shake*iResolution.xy) - iResolution.xy*0.5) / iResolution.y * mat2(6.0,-4.0,4.0,6.0);
+            vec2 v;
+            vec4 o = vec4(0.0);
+            float f = 2.0 + fbm(p + vec2(iTime*5.0,0.0))*0.5;
+            for (float i = 0.0; i < 20.0; i++) {
+              v = p + cos(i*i + (iTime + p.x*0.08)*0.025 + i*vec2(13.0,11.0))*3.5
+                + vec2(sin(iTime*3.0+i)*0.003, cos(iTime*3.5-i)*0.003);
+              float tailNoise = fbm(v + vec2(iTime*0.5, i))*0.3*(1.0-(i/20.0));
+              vec4 auroraColors = vec4(
+                0.25 + 0.35*sin(i*0.15 + iTime*0.3),
+                0.15 + 0.6*cos(i*0.25 + iTime*0.45),
+                0.55 + 0.4*sin(i*0.35 + iTime*0.25),
+                1.0
+              );
+              vec4 cc = auroraColors * exp(sin(i*i + iTime*0.8))
+                / length(max(v, vec2(v.x*f*0.015, v.y*1.5)));
+              float thin = smoothstep(0.0,1.0, i/20.0)*0.6;
+              o += cc*(1.0+tailNoise*0.8)*thin;
+            }
+            o = tanh(pow(o/100.0, vec4(1.6)));
+            gl_FragColor = o * 1.2;
+          }
+        `
+      });
+
+      const geo = new THREE.PlaneGeometry(2, 2);
+      scene.add(new THREE.Mesh(geo, material));
+
+      let frameId;
+      let running = false;
+
+      function animate() {
+        material.uniforms.iTime.value += 0.016;
+        renderer.render(scene, camera);
+        frameId = requestAnimationFrame(animate);
+      }
+
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && !running) {
+            running = true;
+            animate();
+          } else if (!entry.isIntersecting && running) {
+            running = false;
+            cancelAnimationFrame(frameId);
+          }
+        });
+      }, { threshold: 0.05 });
+      obs.observe(section);
+
+      window.addEventListener('resize', () => {
+        const nw = section.offsetWidth;
+        const nh = section.offsetHeight;
+        renderer.setSize(nw, nh);
+        material.uniforms.iResolution.value.set(nw, nh);
+      });
+    }
+
+    /* ---- INIT ---- */
+    document.addEventListener('DOMContentLoaded', () => {
+      initFloatingNav();
+      initStarfield();
+      initEntrance();
+      initScrollAnim();
+      initPersonagensReveal();
+      initTrailersCarousel();
+      initTrailersReveal();
+      initTrailersShader();
+    });
+  </script>
+</body>
+</html>
