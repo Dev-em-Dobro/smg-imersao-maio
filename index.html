@@ -17,8 +17,8 @@
 
     :root {
       /* Cosmic base — deep indigo space, not generic black */
-      --bg-deep: #06051a;
-      --bg-mid: #0c0b2e;
+      --bg-deep: #000000;
+      --bg-mid: #0a0a1a;
       --bg-surface: #141340;
       /* Starlight text — warm off-white like distant stars */
       --text-primary: #f5f0e8;
@@ -38,7 +38,7 @@
     body {
       font-family: 'Outfit', sans-serif;
       background: var(--bg-deep);
-      background-image: linear-gradient(to bottom, #08072a 0%, var(--bg-deep) 50%, #030312 100%);
+      background-image: linear-gradient(to bottom, #050510 0%, var(--bg-deep) 50%, #000000 100%);
       color: var(--text-primary);
       overflow-x: hidden;
       min-height: 100dvh;
@@ -119,6 +119,12 @@
     /* ---- STARFIELD ---- */
     #starfield {
       position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+
+    #personagens-starfield {
+      position: absolute; inset: 0;
       width: 100%; height: 100%;
       z-index: 0; pointer-events: none;
     }
@@ -548,7 +554,7 @@
     #personagens {
       position: relative; z-index: 6;
       padding: 6rem clamp(1rem, 4vw, 2.5rem) 4rem;
-      overflow: visible;
+      overflow: hidden;
     }
 
     #personagens::before {
@@ -561,33 +567,22 @@
         radial-gradient(1.5px 1.5px at 45% 65%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
         radial-gradient(1px 1px at 88% 42%, rgba(180, 200, 255, 0.45) 0%, transparent 100%),
         radial-gradient(1px 1px at 30% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
-        /* Core nebula glow — deep purple */
-        radial-gradient(ellipse 80% 60% at 35% 40%, rgba(88, 28, 180, 0.55) 0%, rgba(60, 20, 140, 0.2) 40%, transparent 70%),
-        /* Secondary nebula arm — electric blue */
-        radial-gradient(ellipse 70% 50% at 70% 55%, rgba(30, 60, 200, 0.45) 0%, rgba(20, 40, 160, 0.15) 45%, transparent 75%),
-        /* Hot core — bright violet accent */
-        radial-gradient(ellipse 40% 35% at 50% 45%, rgba(140, 60, 220, 0.4) 0%, rgba(100, 40, 180, 0.1) 50%, transparent 80%),
-        /* Outer haze — indigo spread */
-        radial-gradient(ellipse 90% 80% at 55% 50%, rgba(40, 20, 120, 0.35) 0%, rgba(20, 10, 80, 0.1) 50%, transparent 85%),
-        /* Subtle warm edge — magenta whisper */
-        radial-gradient(ellipse 50% 40% at 80% 30%, rgba(160, 40, 140, 0.2) 0%, transparent 60%),
-        /* Cool edge — cyan whisper */
-        radial-gradient(ellipse 45% 50% at 15% 70%, rgba(30, 100, 180, 0.18) 0%, transparent 55%),
-        /* Base field */
-        linear-gradient(170deg, #06041c 0%, #0d0833 25%, #120a3d 50%, #0a0630 75%, #06041c 100%);
+        /* Subtle nebula glow — soft purple */
+        radial-gradient(ellipse 80% 60% at 35% 40%, rgba(88, 28, 180, 0.15) 0%, transparent 70%),
+        radial-gradient(ellipse 70% 50% at 70% 55%, rgba(60, 30, 160, 0.1) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(100, 40, 180, 0.08) 0%, transparent 60%),
+        /* Base field — dark with slight purple tint */
+        linear-gradient(170deg, #030312 0%, #08052a 25%, #0a0730 50%, #08052a 75%, #030312 100%);
       z-index: 0;
     }
 
-    #personagens::after {
-      content: '';
-      position: absolute; inset: 0;
-      background:
-        /* Animated-feel soft glow layers */
-        radial-gradient(ellipse 60% 40% at 25% 35%, rgba(100, 50, 200, 0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 60% at 75% 60%, rgba(40, 80, 220, 0.1) 0%, transparent 55%);
-      z-index: 0;
-      mix-blend-mode: screen;
-      opacity: 0.7;
+    #personagens-smoke {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
     }
 
     .personagens-titulo {
@@ -1118,9 +1113,9 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(to bottom, var(--bg-deep) 0%, transparent 18%, transparent 82%, var(--bg-deep) 100%),
-        linear-gradient(to right, var(--bg-deep) 0%, transparent 15%, transparent 85%, var(--bg-deep) 100%),
-        radial-gradient(ellipse 80% 70% at 50% 50%, transparent 25%, rgba(6, 5, 26, 0.65) 70%);
+        linear-gradient(to bottom, var(--bg-deep) 0%, transparent 10%, transparent 90%, var(--bg-deep) 100%),
+        linear-gradient(to right, var(--bg-deep) 0%, transparent 8%, transparent 92%, var(--bg-deep) 100%),
+        radial-gradient(ellipse 80% 70% at 50% 50%, transparent 35%, rgba(6, 5, 26, 0.35) 75%);
     }
 
     .estreia-quote {
@@ -1218,16 +1213,9 @@
     }
 
     .countdown-number {
-      font-size: clamp(3rem, 8vw, 5.5rem);
-      font-weight: 900;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      color: #fff;
-      font-variant-numeric: tabular-nums;
       position: relative;
-      text-shadow:
-        0 0 30px rgba(92, 224, 216, 0.3),
-        0 0 60px rgba(106, 60, 188, 0.2);
+      display: flex;
+      gap: 2px;
     }
 
     .countdown-number::after {
@@ -1245,6 +1233,36 @@
       );
       border-radius: 1px;
       box-shadow: 0 0 8px rgba(92, 224, 216, 0.3);
+    }
+
+    /* Rolling digit slot */
+    .cd-slot {
+      position: relative;
+      width: 0.65em;
+      height: 1.1em;
+      overflow: hidden;
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      color: #fff;
+      text-shadow:
+        0 0 30px rgba(92, 224, 216, 0.3),
+        0 0 60px rgba(106, 60, 188, 0.2);
+    }
+
+    /* The inner strip that slides — contains 0-9 stacked */
+    .cd-strip {
+      display: flex;
+      flex-direction: column;
+      will-change: transform;
+    }
+
+    .cd-strip span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 1.1em;
     }
 
     .countdown-label {
@@ -1286,7 +1304,7 @@
       font-weight: 800;
     }
 
-    /* Parallax stars */
+    /* Floating stars */
     .estreia-star {
       position: absolute;
       z-index: 1;
@@ -1477,6 +1495,8 @@
 
   <!-- Personagens -->
   <section id="personagens">
+    <canvas id="personagens-smoke" aria-hidden="true"></canvas>
+    <canvas id="personagens-starfield" aria-hidden="true"></canvas>
     <div class="personagens-titulo">
       <div class="personagens-eyebrow">Conhega o elenco</div>
       <h2>Personagens</h2>
@@ -1642,14 +1662,14 @@
   <section id="estreia">
     <!-- Nebula background -->
     <div class="estreia-bg" aria-hidden="true">
-      <img src="src/images/nebulosa-img.png" alt="" loading="lazy" />
+      <img src="src/images/nebulosa-quad.webp" alt="" loading="lazy" />
     </div>
-    <!-- Parallax stars -->
-    <div class="estreia-star" data-star="0" data-speed="0.35" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
-    <div class="estreia-star" data-star="1" data-speed="0.2"  aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
-    <div class="estreia-star" data-star="2" data-speed="0.5"  aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
-    <div class="estreia-star" data-star="3" data-speed="0.15" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
-    <div class="estreia-star" data-star="4" data-speed="0.4"  aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
+    <!-- Floating stars -->
+    <div class="estreia-star" data-star="0" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
+    <div class="estreia-star" data-star="1" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
+    <div class="estreia-star" data-star="2" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
+    <div class="estreia-star" data-star="3" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
+    <div class="estreia-star" data-star="4" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
     <!-- Floating particles -->
     <div class="estreia-particle" data-p="0"></div>
     <div class="estreia-particle" data-p="1"></div>
@@ -1681,22 +1701,22 @@
 
     <div class="countdown" id="countdown">
       <div class="countdown-unit">
-        <span class="countdown-number" id="cd-days">00</span>
+        <div class="countdown-number" id="cd-days"></div>
         <span class="countdown-label">Dias</span>
       </div>
       <span class="countdown-separator">:</span>
       <div class="countdown-unit">
-        <span class="countdown-number" id="cd-hours">00</span>
+        <div class="countdown-number" id="cd-hours"></div>
         <span class="countdown-label">Horas</span>
       </div>
       <span class="countdown-separator">:</span>
       <div class="countdown-unit">
-        <span class="countdown-number" id="cd-mins">00</span>
+        <div class="countdown-number" id="cd-mins"></div>
         <span class="countdown-label">Min</span>
       </div>
       <span class="countdown-separator">:</span>
       <div class="countdown-unit">
-        <span class="countdown-number" id="cd-secs">00</span>
+        <div class="countdown-number" id="cd-secs"></div>
         <span class="countdown-label">Seg</span>
       </div>
     </div>
@@ -1851,7 +1871,8 @@
       }
 
       (function draw(t) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#040405';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         /* Nebulae — soft glowing clouds */
         nebulae.forEach(n => {
@@ -1963,6 +1984,214 @@
           return true;
         });
 
+        requestAnimationFrame(draw);
+      })(0);
+    }
+
+    function initStarfieldForCanvas(canvasId, useResizeListener = true) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+
+      function resize() {
+        const parent = canvas.parentElement;
+        canvas.width = parent.offsetWidth;
+        canvas.height = parent.offsetHeight;
+      }
+      resize();
+      if (useResizeListener) {
+        window.addEventListener('resize', resize);
+      }
+
+      /* Star color palette — Galaxy authentic */
+      const starColors = [
+        [255, 248, 220],  /* warm white */
+        [255, 210, 63],   /* Luma yellow */
+        [92, 224, 216],   /* Rosalina cyan */
+        [200, 160, 255],  /* cosmic lavender */
+        [255, 200, 220],  /* stardust rose */
+      ];
+
+      /* Nebula clouds — large, slow-drifting color patches */
+      const nebulae = [];
+      const nebulaColors = [
+        { r: 106, g: 60, b: 188 },  /* cosmic purple */
+        { r: 92, g: 224, b: 216 },  /* cyan */
+        { r: 200, g: 80, b: 140 },  /* rose */
+        { r: 40, g: 70, b: 160 },   /* deep blue */
+      ];
+      for (let i = 0; i < 5; i++) {
+        const c = nebulaColors[i % nebulaColors.length];
+        nebulae.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: 150 + Math.random() * 250,
+          color: c,
+          opacity: 0.025 + Math.random() * 0.03,
+          driftX: (Math.random() - 0.5) * 0.15,
+          driftY: (Math.random() - 0.5) * 0.1,
+          pulsePhase: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.2 + Math.random() * 0.3,
+        });
+      }
+
+      /* Exclusion zone — ellipse in center */
+      function isInCenter(x, y) {
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const rx = canvas.width * 0.22;
+        const ry = canvas.height * 0.28;
+        const dx = (x - cx) / rx;
+        const dy = (y - cy) / ry;
+        return (dx * dx + dy * dy) < 1;
+      }
+
+      /* Stars */
+      for (let i = 0; i < 390; i++) {
+        let x, y;
+        do {
+          x = Math.random() * canvas.width;
+          y = Math.random() * canvas.height;
+        } while (isInCenter(x, y));
+
+        const colorIdx = Math.random() < 0.6 ? 0 : Math.floor(Math.random() * starColors.length);
+        const isBright = Math.random() < 0.08;
+        stars.push({
+          x, y,
+          size: isBright ? (2.5 + Math.random() * 1.5) : (Math.random() * 1.8 + 0.2),
+          base: isBright ? (0.7 + Math.random() * 0.3) : (Math.random() * 0.4 + 0.4),
+          phase: Math.random() * Math.PI * 2,
+          speed: isBright ? (1.0 + Math.random() * 1.5) : (Math.random() * 0.5 + 0.3),
+          color: starColors[colorIdx],
+          bright: isBright,
+          twinkleRate: 2 + Math.random() * 4,
+        });
+      }
+
+      /* Shooting stars */
+      let shootingStars = [];
+      function maybeSpawnShootingStar() {
+        if (shootingStars.length < 6 && Math.random() < 0.018) {
+          let x, y;
+          do {
+            x = Math.random() * canvas.width * 1.2 - canvas.width * 0.1;
+            y = Math.random() * canvas.height * 0.4;
+          } while (isInCenter(x, y));
+
+          const angle = (25 + Math.random() * 30) * Math.PI / 180;
+          const speed = 5 + Math.random() * 8;
+          const colorPool = [starColors[0], starColors[2], starColors[1], [200, 180, 255]];
+          shootingStars.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1.0,
+            decay: 0.008 + Math.random() * 0.012,
+            length: 50 + Math.random() * 90,
+            color: colorPool[Math.floor(Math.random() * colorPool.length)],
+          });
+        }
+      }
+
+      (function draw(t) {
+        ctx.fillStyle = '#040405';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        nebulae.forEach(n => {
+          const pulseFactor = 0.8 + 0.2 * Math.sin(t * 0.001 * n.pulseSpeed + n.pulsePhase);
+          n.x += n.driftX;
+          n.y += n.driftY;
+          if (n.x < -n.radius) n.x = canvas.width + n.radius;
+          if (n.x > canvas.width + n.radius) n.x = -n.radius;
+          if (n.y < -n.radius) n.y = canvas.height + n.radius;
+          if (n.y > canvas.height + n.radius) n.y = -n.radius;
+
+          const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.radius * pulseFactor);
+          grad.addColorStop(0, `rgba(${n.color.r},${n.color.g},${n.color.b},${n.opacity * pulseFactor})`);
+          grad.addColorStop(0.4, `rgba(${n.color.r},${n.color.g},${n.color.b},${n.opacity * 0.4 * pulseFactor})`);
+          grad.addColorStop(1, `rgba(${n.color.r},${n.color.g},${n.color.b},0)`);
+          ctx.fillStyle = grad;
+          ctx.fillRect(n.x - n.radius, n.y - n.radius, n.radius * 2, n.radius * 2);
+        });
+
+        stars.forEach(s => {
+          const [cr, cg, cb] = s.color;
+          if (s.bright) {
+            const twinkle = 0.3 + 0.7 * Math.abs(Math.sin(t * 0.001 * s.twinkleRate + s.phase));
+            const op = s.base * twinkle;
+            const r = s.size * (0.85 + 0.15 * twinkle);
+            ctx.save();
+            ctx.globalAlpha = op * 0.35;
+            ctx.strokeStyle = `rgb(${cr},${cg},${cb})`;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(s.x - r * 4, s.y);
+            ctx.lineTo(s.x + r * 4, s.y);
+            ctx.moveTo(s.x, s.y - r * 4);
+            ctx.lineTo(s.x, s.y + r * 4);
+            ctx.stroke();
+            ctx.restore();
+            const halo = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 5);
+            halo.addColorStop(0, `rgba(${cr},${cg},${cb},${op * 0.25})`);
+            halo.addColorStop(0.5, `rgba(${cr},${cg},${cb},${op * 0.06})`);
+            halo.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+            ctx.fillStyle = halo;
+            ctx.fillRect(s.x - r * 5, s.y - r * 5, r * 10, r * 10);
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(${cr},${cg},${cb},${op})`;
+            ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255,255,255,${op * 0.8})`;
+            ctx.arc(s.x, s.y, r * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            const pulse = 0.45 + 0.55 * Math.sin(t * 0.001 * s.speed + s.phase);
+            const op = s.base * pulse;
+            const r = s.size * (0.92 + 0.08 * pulse);
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(${cr},${cg},${cb},${op})`;
+            ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            if (s.size > 1.2) {
+              ctx.beginPath();
+              ctx.fillStyle = `rgba(${cr},${cg},${cb},${op * 0.12})`;
+              ctx.arc(s.x, s.y, r * 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        });
+
+        maybeSpawnShootingStar();
+        shootingStars = shootingStars.filter(ss => {
+          ss.x += ss.vx;
+          ss.y += ss.vy;
+          ss.life -= ss.decay;
+          if (ss.life <= 0) return false;
+          const [cr, cg, cb] = ss.color;
+          const grad = ctx.createLinearGradient(
+            ss.x, ss.y,
+            ss.x - (ss.vx / Math.hypot(ss.vx, ss.vy)) * ss.length,
+            ss.y - (ss.vy / Math.hypot(ss.vx, ss.vy)) * ss.length
+          );
+          grad.addColorStop(0, `rgba(255,255,255,${ss.life * 0.9})`);
+          grad.addColorStop(0.3, `rgba(${cr},${cg},${cb},${ss.life * 0.6})`);
+          grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+          ctx.save();
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 1.5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(ss.x, ss.y);
+          ctx.lineTo(
+            ss.x - (ss.vx / Math.hypot(ss.vx, ss.vy)) * ss.length * ss.life,
+            ss.y - (ss.vy / Math.hypot(ss.vx, ss.vy)) * ss.length * ss.life
+          );
+          ctx.stroke();
+          ctx.restore();
+          return true;
+        });
         requestAnimationFrame(draw);
       })(0);
     }
@@ -2478,39 +2707,27 @@
       const particles = section.querySelectorAll('.estreia-particle');
       const stars = section.querySelectorAll('.estreia-star');
 
-      /* -- Parallax stars on scroll + continuous float -- */
+      /* -- Gentle float for stars (no scroll parallax) -- */
       const starSeeds = Array.from(stars).map((_, i) => ({
         phaseY: Math.random() * Math.PI * 2,
         phaseX: Math.random() * Math.PI * 2,
         phaseR: Math.random() * Math.PI * 2,
-        freqY: 0.6 + i * 0.15,
-        freqX: 0.4 + i * 0.12,
-        freqR: 0.3 + i * 0.1,
-        ampY: 14 + i * 4,
-        ampX: 8 + i * 3,
-        ampR: 10 + i * 3,
+        freqY: 0.4 + i * 0.1,
+        freqX: 0.3 + i * 0.08,
+        freqR: 0.2 + i * 0.06,
       }));
 
-      function updateStarParallax() {
-        const rect = section.getBoundingClientRect();
-        const sectionCenter = rect.top + rect.height / 2;
-        const viewCenter = window.innerHeight / 2;
-        const offset = sectionCenter - viewCenter;
+      (function floatStars() {
         const t = Date.now() * 0.001;
-
         stars.forEach((star, i) => {
-          const speed = parseFloat(star.dataset.speed) || 0.3;
           const s = starSeeds[i];
-          const parallaxY = offset * speed * -1;
-          const floatY = Math.sin(t * s.freqY + s.phaseY) * s.ampY;
-          const floatX = Math.sin(t * s.freqX + s.phaseX) * s.ampX;
-          const rotate = Math.sin(t * s.freqR + s.phaseR) * s.ampR;
-          star.style.transform = `translate(${floatX}px, ${parallaxY + floatY}px) rotate(${rotate}deg)`;
+          const y = Math.sin(t * s.freqY + s.phaseY) * 10;
+          const x = Math.sin(t * s.freqX + s.phaseX) * 6;
+          const r = Math.sin(t * s.freqR + s.phaseR) * 8;
+          star.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg)`;
         });
-
-        requestAnimationFrame(updateStarParallax);
-      }
-      requestAnimationFrame(updateStarParallax);
+        requestAnimationFrame(floatStars);
+      })();
 
       /* -- Scroll reveal -- */
       let revealed = false;
@@ -2576,7 +2793,7 @@
           duration: 500,
         }, '-=400');
 
-        /* Stars fade in scattered */
+        /* Stars fade in */
         stars.forEach((star, i) => {
           tl.add({
             targets: star,
@@ -2606,40 +2823,87 @@
         });
       }
 
-      /* -- Countdown timer -- */
+      /* -- Rolling digit countdown -- */
       const TARGET = new Date('2026-12-25T00:00:00').getTime();
+
+      /* Build a rolling slot: a column of 0–9 that slides via translateY */
+      function createSlot() {
+        const slot = document.createElement('div');
+        slot.className = 'cd-slot';
+
+        const strip = document.createElement('div');
+        strip.className = 'cd-strip';
+
+        for (let i = 0; i < 10; i++) {
+          const span = document.createElement('span');
+          span.textContent = i;
+          strip.appendChild(span);
+        }
+
+        slot.appendChild(strip);
+        slot._strip = strip;
+        slot._current = -1;
+        return slot;
+      }
+
+      /* Init units with the right number of slots */
+      function initUnit(container, numDigits) {
+        const slots = [];
+        for (let i = 0; i < numDigits; i++) {
+          const slot = createSlot();
+          container.appendChild(slot);
+          slots.push(slot);
+        }
+        container._slots = slots;
+      }
+
       const $d = document.getElementById('cd-days');
       const $h = document.getElementById('cd-hours');
       const $m = document.getElementById('cd-mins');
       const $s = document.getElementById('cd-secs');
 
-      function pad(n) { return String(n).padStart(2, '0'); }
+      initUnit($d, 3);
+      initUnit($h, 2);
+      initUnit($m, 2);
+      initUnit($s, 2);
+
+      /* Roll a single slot to a target digit (0-9) */
+      function rollTo(slot, digit) {
+        if (slot._current === digit) return;
+        slot._current = digit;
+
+        const stripEl = slot._strip;
+        const cellH = slot.offsetHeight;
+        const targetY = -digit * cellH;
+
+        anime.remove(stripEl);
+        anime({
+          targets: stripEl,
+          translateY: targetY,
+          duration: 600,
+          easing: 'spring(1, 85, 12, 0)',
+        });
+      }
+
+      /* Update a whole unit (days/hours/mins/secs) */
+      function updateUnit(container, value) {
+        const chars = value.split('');
+        container._slots.forEach((slot, i) => {
+          rollTo(slot, parseInt(chars[i], 10));
+        });
+      }
 
       function tick() {
         const diff = Math.max(0, TARGET - Date.now());
-        const days = Math.floor(diff / 86400000);
-        const hours = Math.floor((diff % 86400000) / 3600000);
-        const mins = Math.floor((diff % 3600000) / 60000);
-        const secs = Math.floor((diff % 60000) / 1000);
+        const days = String(Math.floor(diff / 86400000)).padStart(3, '0');
+        const hours = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
+        const mins = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+        const secs = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
 
-        const newD = pad(days), newH = pad(hours), newM = pad(mins), newS = pad(secs);
-
-        /* Animate number changes */
-        if ($d.textContent !== newD) flipNum($d, newD);
-        if ($h.textContent !== newH) flipNum($h, newH);
-        if ($m.textContent !== newM) flipNum($m, newM);
-        if ($s.textContent !== newS) flipNum($s, newS);
-      }
-
-      function flipNum(el, val) {
-        anime({
-          targets: el,
-          translateY: [-8, 0],
-          opacity: [0.5, 1],
-          duration: 300,
-          easing: 'easeOutCubic',
-          begin: () => { el.textContent = val; }
-        });
+        updateUnit($d, days);
+        updateUnit($h, hours);
+        updateUnit($m, mins);
+        updateUnit($s, secs);
       }
 
       tick();
@@ -2674,12 +2938,122 @@
       });
     }
 
+    /* ---- PERSONAGENS SMOKE BACKGROUND ---- */
+    function initPersonagensSmoke() {
+      const canvas = document.getElementById('personagens-smoke');
+      if (!canvas) return;
+      const gl = canvas.getContext('webgl2');
+      if (!gl) return;
+
+      const vertSrc = `#version 300 es
+precision highp float;
+in vec4 position;
+void main(){gl_Position=position;}`;
+
+      const fragSrc = `#version 300 es
+precision highp float;
+out vec4 O;
+uniform float time;
+uniform vec2 resolution;
+uniform vec3 u_color;
+#define FC gl_FragCoord.xy
+#define R resolution
+#define T (time+660.)
+float rnd(vec2 p){p=fract(p*vec2(12.9898,78.233));p+=dot(p,p+34.56);return fract(p.x*p.y);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);return mix(mix(rnd(i),rnd(i+vec2(1,0)),u.x),mix(rnd(i+vec2(0,1)),rnd(i+1.),u.x),u.y);}
+float fbm(vec2 p){float t=.0,a=1.;for(int i=0;i<5;i++){t+=a*noise(p);p*=mat2(1,-1.2,.2,1.2)*2.;a*=.5;}return t;}
+
+vec3 smokePass(vec2 uv, float dir){
+  vec3 col=vec3(1);
+  uv.x = uv.x * dir + .25;
+  uv*=vec2(2,1);
+  float n=fbm(uv*.28-vec2(T*.01*dir,0));
+  n=noise(uv*3.+n*2.);
+  col.r-=fbm(uv+vec2(0,T*.015)+n);
+  col.g-=fbm(uv*1.003+vec2(0,T*.015)+n+.003);
+  col.b-=fbm(uv*1.006+vec2(0,T*.015)+n+.006);
+  return col;
+}
+
+void main(){
+  vec2 uv=(FC-.5*R)/R.y;
+  vec3 left=smokePass(uv, 1.0);
+  vec3 right=smokePass(uv, -1.0);
+  vec3 col=min(left,right);
+  col=mix(col,u_color,dot(col,vec3(.21,.71,.07)));
+  col=mix(vec3(.08),col,1.);
+  col=clamp(col,.08,1.);
+  O=vec4(col,1);
+}`;
+
+      // Compile shaders
+      const vs = gl.createShader(gl.VERTEX_SHADER);
+      const fs = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(vs, vertSrc); gl.compileShader(vs);
+      gl.shaderSource(fs, fragSrc); gl.compileShader(fs);
+      const prog = gl.createProgram();
+      gl.attachShader(prog, vs); gl.attachShader(prog, fs);
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error('Smoke shader link error'); return; }
+
+      // Geometry
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,1,-1,-1,1,1,1,-1]), gl.STATIC_DRAW);
+      const pos = gl.getAttribLocation(prog, 'position');
+      gl.enableVertexAttribArray(pos);
+      gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+
+      // Uniforms
+      const uRes = gl.getUniformLocation(prog, 'resolution');
+      const uTime = gl.getUniformLocation(prog, 'time');
+      const uColor = gl.getUniformLocation(prog, 'u_color');
+
+      // Cosmic purple smoke
+      const smokeColor = [0.42, 0.24, 0.74]; // #6a3cbc
+
+      function resize() {
+        const section = canvas.parentElement;
+        const dpr = Math.min(window.devicePixelRatio, 2);
+        canvas.width = section.offsetWidth * dpr;
+        canvas.height = section.offsetHeight * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+
+      // Only render when section is in view
+      let isVisible = false;
+      let rafId = null;
+      const observer = new IntersectionObserver(([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible && !rafId) loop(performance.now());
+      }, { threshold: 0 });
+      observer.observe(canvas.parentElement);
+
+      function loop(now) {
+        if (!isVisible) { rafId = null; return; }
+        gl.clearColor(0,0,0,1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(prog);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.uniform1f(uTime, now * 1e-3);
+        gl.uniform3fv(uColor, smokeColor);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        rafId = requestAnimationFrame(loop);
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+    }
+
     /* ---- INIT ---- */
     document.addEventListener('DOMContentLoaded', () => {
       initFloatingNav();
       initStarfield();
+      initStarfieldForCanvas('personagens-starfield', false);
       initEntrance();
       initScrollAnim();
+      initPersonagensSmoke();
       initPersonagensReveal();
       initCharPopups();
       initTrailersCarousel();
