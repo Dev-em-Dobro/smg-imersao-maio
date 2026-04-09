@@ -203,20 +203,14 @@
       outline: none;
     }
 
-    .hero-character-fallback {
-      display: none;
-    }
-
-    #mario-img,
-    #mario-img-fallback {
+    #mario-img {
       width: 280px;
       top: 30%;
       left: 6%;
       animation: hero-float-mario 4s ease-in-out infinite;
     }
 
-    #yoshi-img,
-    #yoshi-img-fallback {
+    #yoshi-img {
       width: 170px;
       top: clamp(14%, 17vh, 20%);
       right: clamp(12%, 5vw, 6%);
@@ -1399,20 +1393,15 @@
 
     /* ---- RESPONSIVO ---- */
     @media (max-width: 768px) {
-      .hero-character-video { display: none; }
-      .hero-character-fallback { display: block; }
       .hero-planet-glow { display: none; }
       #planet-wrap { width: 520px; height: 520px; left: calc(50% - 260px); bottom: 0; }
-      #mario-img, #mario-img-fallback { width: 140px; top: 22%; left: 3%; }
-      #yoshi-img, #yoshi-img-fallback { width: 78px; top: 16%; right: 3%; }
+      #mario-img, #yoshi-img { display: none; }
       .hero-text   { top: clamp(34%, 40vh, 47%); }
       .hero-title  { font-size: 2.4rem; }
       .scroll-hint { bottom: 1rem; }
     }
     @media (max-width: 480px) {
       #planet-wrap { width: 400px; height: 400px; left: calc(50% - 200px); top: 20%; }
-      #mario-img, #mario-img-fallback { width: 100px; top: 21%; left: 2%; }
-      #yoshi-img, #yoshi-img-fallback { width: 58px;  top: 15%; right: 2%; }
       .hero-text   { top: clamp(32%, 38vh, 45%); }
       .scroll-hint { bottom: 0.8rem; }
     }
@@ -1446,16 +1435,14 @@
   <canvas id="starfield" aria-hidden="true"></canvas>
 
   <!-- Floating characters — fixed, controlled by scroll JS -->
-  <video id="mario-img" class="hero-character hero-character-video" autoplay loop muted playsinline preload="auto">
+  <video id="mario-img" class="hero-character" autoplay loop muted playsinline preload="auto">
     <source src="src/videos/mario-clip-alpha.webm" type="video/webm" />
     <source src="src/videos/mario-clip-min.mp4" type="video/mp4" />
   </video>
-  <img id="mario-img-fallback" class="hero-character hero-character-fallback" src="src/videos/mario-original.webp" alt="Mario" loading="eager" decoding="async" />
-  <video id="yoshi-img" class="hero-character hero-character-video" autoplay loop muted playsinline preload="auto">
+  <video id="yoshi-img" class="hero-character" autoplay loop muted playsinline preload="auto">
     <source src="src/videos/yoshi-video-alpha.webm" type="video/webm" />
     <source src="src/videos/yoshi-video-min.mp4" type="video/mp4" />
   </video>
-  <img id="yoshi-img-fallback" class="hero-character hero-character-fallback" src="src/videos/yoshi-perso.webp" alt="Yoshi" loading="eager" decoding="async" />
 
   <section id="hero">
     <div class="hero-sticky">
@@ -2186,12 +2173,8 @@
 
     /* ---- ENTRANCE ---- */
     function initEntrance() {
-      const isMobileViewport = window.matchMedia('(max-width: 768px)').matches;
-      const marioTarget = isMobileViewport ? '#mario-img-fallback' : '#mario-img';
-      const yoshiTarget = isMobileViewport ? '#yoshi-img-fallback' : '#yoshi-img';
-
       if (REDUCED) {
-        anime.set(['.hero-eyebrow','.hero-title','.hero-subtitle','.hero-cta','#planet-wrap','#mario-img','#mario-img-fallback','#yoshi-img','#yoshi-img-fallback','#scroll-hint','.luma-star'],
+        anime.set(['.hero-eyebrow','.hero-title','.hero-subtitle','.hero-cta','#planet-wrap','#mario-img','#yoshi-img','#scroll-hint','.luma-star'],
           { opacity: 1 });
         return;
       }
@@ -2199,9 +2182,9 @@
       anime.timeline({ defaults: { easing: 'easeOutExpo' } })
         .add({ targets: '#planet-wrap',
           opacity: [0, 1], translateY: [60, 0], duration: 1100, easing: 'easeOutCubic' })
-        .add({ targets: marioTarget,
+        .add({ targets: '#mario-img',
           opacity: [0, 1], translateX: [-40, 0], duration: 800, easing: 'easeOutCubic' }, '-=700')
-        .add({ targets: yoshiTarget,
+        .add({ targets: '#yoshi-img',
           opacity: [0, 1], translateX: [40, 0], duration: 800, easing: 'easeOutCubic' }, '-=600')
         .add({ targets: '.hero-eyebrow',
           opacity: [0, 1], translateY: [12, 0], scale: [0.9, 1], duration: 600 }, '-=500')
@@ -2219,12 +2202,11 @@
     function initScrollAnim() {
       if (REDUCED) return;
 
-      const isMobileViewport = window.matchMedia('(max-width: 768px)').matches;
       const $scrollHint = document.getElementById('scroll-hint');
       const $heroText = document.querySelector('.hero-text');
       const $planetWrap = document.getElementById('planet-wrap');
-      const $mario = document.getElementById(isMobileViewport ? 'mario-img-fallback' : 'mario-img');
-      const $yoshi = document.getElementById(isMobileViewport ? 'yoshi-img-fallback' : 'yoshi-img');
+      const $mario = document.getElementById('mario-img');
+      const $yoshi = document.getElementById('yoshi-img');
       const $luma1 = document.getElementById('luma-1');
       const $luma2 = document.getElementById('luma-2');
       const $luma3 = document.getElementById('luma-3');
