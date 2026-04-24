@@ -1422,7 +1422,7 @@
 
     /* Static-capture mode — append ?static to the URL before running html.to.design / Figma import.
        Freezes every animation and forces all intro/scroll-driven elements to their visible state so
-       the DOM snapshotter sees the hero exactly as intended. */
+       the DOM snapshotter sees the page exactly as intended. */
     html.static-capture *,
     html.static-capture *::before,
     html.static-capture *::after {
@@ -1436,12 +1436,32 @@
     html.static-capture .hero-subtitle,
     html.static-capture .hero-cta,
     html.static-capture #scroll-hint,
-    html.static-capture .luma-star {
+    html.static-capture .luma-star,
+    html.static-capture .personagens-eyebrow,
+    html.static-capture .personagens-titulo h2,
+    html.static-capture .personagens-titulo p,
+    html.static-capture .char-card,
+    html.static-capture .trailers-eyebrow,
+    html.static-capture .trailers-head h2,
+    html.static-capture .trailers-head p,
+    html.static-capture .trailers-carousel,
+    html.static-capture .trailers-nav,
+    html.static-capture .trailers-watermark,
+    html.static-capture .estreia-quote .quote-word,
+    html.static-capture .estreia-quote cite,
+    html.static-capture .estreia-divider,
+    html.static-capture .estreia-label,
+    html.static-capture .countdown,
+    html.static-capture .estreia-date,
+    html.static-capture .estreia-star {
       opacity: 1 !important;
       transform: none !important;
     }
+    html.static-capture .estreia-divider { transform: scaleX(1) !important; }
+    html.static-capture .estreia-particle { opacity: 0 !important; }
     html.static-capture #mario-img { transform: none !important; }
     html.static-capture #yoshi-img { transform: scaleX(-1) !important; }
+    html.static-capture .floating-nav { opacity: 1 !important; transform: translateX(-50%) translateY(0) !important; }
   </style>
 </head>
 <body>
@@ -2802,28 +2822,32 @@
         freqR: 0.2 + i * 0.06,
       }));
 
-      (function floatStars() {
-        const t = Date.now() * 0.001;
-        stars.forEach((star, i) => {
-          const s = starSeeds[i];
-          const y = Math.sin(t * s.freqY + s.phaseY) * 10;
-          const x = Math.sin(t * s.freqX + s.phaseX) * 6;
-          const r = Math.sin(t * s.freqR + s.phaseR) * 8;
-          star.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg)`;
-        });
-        requestAnimationFrame(floatStars);
-      })();
+      if (!STATIC_CAPTURE) {
+        (function floatStars() {
+          const t = Date.now() * 0.001;
+          stars.forEach((star, i) => {
+            const s = starSeeds[i];
+            const y = Math.sin(t * s.freqY + s.phaseY) * 10;
+            const x = Math.sin(t * s.freqX + s.phaseX) * 6;
+            const r = Math.sin(t * s.freqR + s.phaseR) * 8;
+            star.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg)`;
+          });
+          requestAnimationFrame(floatStars);
+        })();
+      }
 
       /* -- Scroll reveal -- */
       let revealed = false;
-      const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !revealed) {
-          revealed = true;
-          revealSequence();
-          observer.disconnect();
-        }
-      }, { threshold: 0.2 });
-      observer.observe(section);
+      if (!STATIC_CAPTURE) {
+        const observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting && !revealed) {
+            revealed = true;
+            revealSequence();
+            observer.disconnect();
+          }
+        }, { threshold: 0.2 });
+        observer.observe(section);
+      }
 
       function revealSequence() {
         const tl = anime.timeline({ defaults: { easing: 'easeOutExpo' } });
@@ -2952,7 +2976,7 @@
       initUnit($m, 2);
       initUnit($s, 2);
 
-      /* Roll a single slot to a target digit (0-9) */
+      /* Roll a single slot to a target digit (0-9). Static mode snaps without spring. */
       function rollTo(slot, digit) {
         if (slot._current === digit) return;
         slot._current = digit;
@@ -2960,6 +2984,11 @@
         const stripEl = slot._strip;
         const cellH = slot.offsetHeight;
         const targetY = -digit * cellH;
+
+        if (STATIC_CAPTURE) {
+          stripEl.style.transform = `translateY(${targetY}px)`;
+          return;
+        }
 
         anime.remove(stripEl);
         anime({
@@ -2992,9 +3021,10 @@
       }
 
       tick();
-      setInterval(tick, 1000);
+      if (!STATIC_CAPTURE) setInterval(tick, 1000);
 
       /* -- Floating particles continuous orbit -- */
+      if (STATIC_CAPTURE) return;
       particles.forEach((p, i) => {
         const cx = 50 + (Math.random() - 0.5) * 30;
         const cy = 50 + (Math.random() - 0.5) * 40;
@@ -3039,15 +3069,15 @@
     document.addEventListener('DOMContentLoaded', () => {
       if (STATIC_CAPTURE) freezeVideosForCapture();
       initFloatingNav();
-      initStarfield();
-      initPersonagensParticles();
+      if (!STATIC_CAPTURE) initStarfield();
+      if (!STATIC_CAPTURE) initPersonagensParticles();
       initEntrance();
       initScrollAnim();
       initPersonagensReveal();
       initCharPopups();
       initTrailersCarousel();
       initTrailersReveal();
-      initTrailersShader();
+      if (!STATIC_CAPTURE) initTrailersShader();
       initEstreia();
     });
   </script>
