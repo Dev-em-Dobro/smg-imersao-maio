@@ -1419,6 +1419,29 @@
       .marquee-track { animation: none; }
       .trailers-track { transition-duration: 0.01ms; }
     }
+
+    /* Static-capture mode — append ?static to the URL before running html.to.design / Figma import.
+       Freezes every animation and forces all intro/scroll-driven elements to their visible state so
+       the DOM snapshotter sees the hero exactly as intended. */
+    html.static-capture *,
+    html.static-capture *::before,
+    html.static-capture *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    html.static-capture .hero-character,
+    html.static-capture #planet-wrap,
+    html.static-capture .hero-eyebrow,
+    html.static-capture .hero-title,
+    html.static-capture .hero-subtitle,
+    html.static-capture .hero-cta,
+    html.static-capture #scroll-hint,
+    html.static-capture .luma-star {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    html.static-capture #mario-img { transform: none !important; }
+    html.static-capture #yoshi-img { transform: scaleX(-1) !important; }
   </style>
 </head>
 <body>
@@ -1682,7 +1705,7 @@
   <section id="estreia">
     <!-- Nebula background -->
     <div class="estreia-bg" aria-hidden="true">
-      <img src="src/images/nebulosa-quad.png" alt="" loading="lazy" />
+      <img src="src/images/nebulosa-quad.webp" alt="" loading="lazy" />
     </div>
     <!-- Floating stars -->
     <div class="estreia-star" data-star="0" aria-hidden="true"><img src="src/videos/estrela-min.webp" alt="" /></div>
@@ -1742,7 +1765,9 @@
   </footer>
 
   <script>
-    const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const STATIC_CAPTURE = new URLSearchParams(location.search).has('static');
+    if (STATIC_CAPTURE) document.documentElement.classList.add('static-capture');
+    const REDUCED = STATIC_CAPTURE || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function remap(v, inMin, inMax, outMin, outMax) {
       if (v <= inMin) return outMin;
@@ -2998,8 +3023,21 @@
       });
     }
 
+    /* Pin every <video> to its first frame so html.to.design snapshots a stable image. */
+    function freezeVideosForCapture() {
+      document.querySelectorAll('video').forEach(v => {
+        v.autoplay = false;
+        v.loop = false;
+        const pin = () => { try { v.currentTime = 0.05; v.pause(); } catch (e) {} };
+        if (v.readyState >= 1) pin();
+        else v.addEventListener('loadedmetadata', pin, { once: true });
+        v.pause();
+      });
+    }
+
     /* ---- INIT ---- */
     document.addEventListener('DOMContentLoaded', () => {
+      if (STATIC_CAPTURE) freezeVideosForCapture();
       initFloatingNav();
       initStarfield();
       initPersonagensParticles();
