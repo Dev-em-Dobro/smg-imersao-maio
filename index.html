@@ -3053,9 +3053,26 @@
       });
     }
 
-    /* Pin every <video> to its first frame so html.to.design snapshots a stable image. */
+    /* Static-capture: swap hero <video> elements for poster <img> tags so html.to.design
+       can import them as real image layers. Other <video> elements are just paused on frame 0. */
     function freezeVideosForCapture() {
+      const posterMap = {
+        'mario-img':  'src/images/figma-posters/mario-poster.png',
+        'yoshi-img':  'src/images/figma-posters/yoshi-poster.png',
+        'planet-img': 'src/images/figma-posters/planet-poster.png',
+      };
+
       document.querySelectorAll('video').forEach(v => {
+        const poster = posterMap[v.id];
+        if (poster) {
+          const img = document.createElement('img');
+          img.id = v.id;
+          img.className = v.className;
+          img.src = poster;
+          img.alt = '';
+          v.replaceWith(img);
+          return;
+        }
         v.autoplay = false;
         v.loop = false;
         const pin = () => { try { v.currentTime = 0.05; v.pause(); } catch (e) {} };
