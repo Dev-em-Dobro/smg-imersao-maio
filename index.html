@@ -3139,13 +3139,13 @@
     }
 
     /* Mobile fallback: some mobile browsers don't support alpha video reliably,
-       causing black backgrounds. Replace hero character videos with transparent posters. */
+       causing black backgrounds. Replace hero character videos with clean static images. */
     function applyMobileHeroVideoFallback() {
       if (!window.matchMedia('(max-width: 768px)').matches) return;
 
       const posterMap = {
-        'mario-img': 'src/images/figma-posters/mario-poster.png',
-        'yoshi-img': 'src/images/figma-posters/yoshi-poster.png',
+        'mario-img': 'src/images/mobile-hero/mario-clean.png',
+        'yoshi-img': 'src/images/mobile-hero/yoshi png transparente.png',
       };
 
       Object.entries(posterMap).forEach(([id, poster]) => {
