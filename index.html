@@ -1395,7 +1395,18 @@
     @media (max-width: 768px) {
       .hero-planet-glow { display: none; }
       #planet-wrap { width: 520px; height: 520px; left: calc(50% - 260px); bottom: 0; }
-      #mario-img, #yoshi-img { display: none; }
+      #mario-img, #yoshi-img { display: block; }
+      #mario-img {
+        width: clamp(120px, 34vw, 170px);
+        top: max(72px, 9vh);
+        left: 4%;
+      }
+      #yoshi-img {
+        width: clamp(110px, 32vw, 155px);
+        top: auto;
+        bottom: max(116px, 18vh);
+        right: 3%;
+      }
       .hero-text   { top: clamp(34%, 40vh, 47%); }
       .hero-title  { font-size: 2.4rem; }
       .scroll-hint { bottom: 1rem; }
@@ -1504,7 +1515,7 @@
         <h1 class="hero-title">Super Mario<br><span>Galaxy: O Filme</span></h1>
         <p class="hero-subtitle">Uma aventura epica pelo cosmos</p>
         <a class="hero-cta" href="#trailers">
-          <span class="cta-label">Watch Trailer</span>
+          <span class="cta-label">Assistir Trailer</span>
           <span class="cta-icon">
             <svg viewBox="0 0 20 20" fill="currentColor">
               <path clip-rule="evenodd" fill-rule="evenodd"
@@ -2535,9 +2546,20 @@
         obs.observe(card);
       });
 
-      let parallaxTicking = false;
+      const parallaxState = new Map();
+      cards.forEach((card) => {
+        parallaxState.set(card, {
+          currentY: 0,
+          currentRot: 0,
+          targetY: 0,
+          targetRot: 0
+        });
+      });
 
-      function updateParallax() {
+      let parallaxRaf = 0;
+      const PARALLAX_LERP = 0.12;
+
+      function computeParallaxTargets() {
         const rect = section.getBoundingClientRect();
         const sectionCenter = rect.top + rect.height / 2;
         const viewCenter = window.innerHeight / 2;
@@ -2546,21 +2568,55 @@
         cards.forEach(card => {
           const speed = parseFloat(card.dataset.speed) || 0;
           const maxRot = parseFloat(card.dataset.rotate) || 0;
-          const yShift = offset * speed;
-          const rot = (offset / window.innerHeight) * maxRot;
-          card.style.transform = `translateY(${yShift}px) rotate(${rot}deg)`;
+          const state = parallaxState.get(card);
+          if (!state) return;
+          state.targetY = offset * speed;
+          state.targetRot = (offset / window.innerHeight) * maxRot;
         });
-        parallaxTicking = false;
       }
 
-      window.addEventListener('scroll', () => {
-        if (!parallaxTicking) {
-          parallaxTicking = true;
-          requestAnimationFrame(updateParallax);
-        }
-      }, { passive: true });
+      function renderParallax(force = false) {
+        let stillAnimating = false;
 
-      updateParallax();
+        cards.forEach((card) => {
+          const state = parallaxState.get(card);
+          if (!state) return;
+
+          if (force) {
+            state.currentY = state.targetY;
+            state.currentRot = state.targetRot;
+          } else {
+            state.currentY += (state.targetY - state.currentY) * PARALLAX_LERP;
+            state.currentRot += (state.targetRot - state.currentRot) * PARALLAX_LERP;
+          }
+
+          const yDelta = Math.abs(state.targetY - state.currentY);
+          const rotDelta = Math.abs(state.targetRot - state.currentRot);
+          if (yDelta > 0.12 || rotDelta > 0.02) stillAnimating = true;
+
+          card.style.transform = `translateY(${state.currentY}px) rotate(${state.currentRot}deg)`;
+        });
+
+        if (stillAnimating) {
+          parallaxRaf = requestAnimationFrame(() => renderParallax(false));
+        } else {
+          parallaxRaf = 0;
+        }
+      }
+
+      function queueParallaxUpdate() {
+        computeParallaxTargets();
+        if (!parallaxRaf) {
+          parallaxRaf = requestAnimationFrame(() => renderParallax(false));
+        }
+      }
+
+      window.addEventListener('scroll', queueParallaxUpdate, { passive: true });
+      window.addEventListener('resize', queueParallaxUpdate, { passive: true });
+
+      computeParallaxTargets();
+      renderParallax(true);
+      requestAnimationFrame(queueParallaxUpdate);
     }
 
     /* ---- TRAILERS CAROUSEL ---- */
