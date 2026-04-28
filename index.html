@@ -3138,9 +3138,33 @@
       });
     }
 
+    /* Mobile fallback: some mobile browsers don't support alpha video reliably,
+       causing black backgrounds. Replace hero character videos with transparent posters. */
+    function applyMobileHeroVideoFallback() {
+      if (!window.matchMedia('(max-width: 768px)').matches) return;
+
+      const posterMap = {
+        'mario-img': 'src/images/figma-posters/mario-poster.png',
+        'yoshi-img': 'src/images/figma-posters/yoshi-poster.png',
+      };
+
+      Object.entries(posterMap).forEach(([id, poster]) => {
+        const el = document.getElementById(id);
+        if (!el || el.tagName !== 'VIDEO') return;
+
+        const img = document.createElement('img');
+        img.id = el.id;
+        img.className = el.className;
+        img.src = poster;
+        img.alt = '';
+        el.replaceWith(img);
+      });
+    }
+
     /* ---- INIT ---- */
     document.addEventListener('DOMContentLoaded', () => {
       if (STATIC_CAPTURE) freezeVideosForCapture();
+      else applyMobileHeroVideoFallback();
       initFloatingNav();
       if (!STATIC_CAPTURE) initStarfield();
       if (!STATIC_CAPTURE) initPersonagensParticles();
